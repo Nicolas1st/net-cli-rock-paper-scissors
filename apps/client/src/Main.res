@@ -36,8 +36,6 @@ module ManuRenderer = {
     )
   }
 
-  type choice = [#createGame | #joinGame | #exit]
-
   let make = () =>
     prompt(
       ~message="Game menu",
