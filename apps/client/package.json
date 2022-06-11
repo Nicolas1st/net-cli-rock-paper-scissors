@@ -1,0 +1,22 @@
+{
+  "name": "client",
+  "version": "1.0.0",
+  "author": "Dmitry Zakharov <dzakh.dev@gmail.com>",
+  "scripts": {
+    "res:build": "rescript build -with-deps",
+    "res:dev": "rescript build -with-deps -w",
+    "test": "ava"
+  },
+  "ava": {
+    "files": [
+      "__tests__/**/*_test.bs.js"
+    ]
+  },
+  "dependencies": {
+    "rescript": "9.1.4",
+    "rescript-struct": "0.12.1"
+  },
+  "devDependencies": {
+    "rescript-ava": "github:DZakh/rescript-ava#007d9f63e17310f73fabab1223eb75a0c9c36035"
+  }
+}
