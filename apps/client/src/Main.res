@@ -88,8 +88,8 @@ module GameStatusWaitingForOpponentJoinRenderer = {
   let make = (~gameCode) => {
     UI.message(
       [
-        "Waiting when an opponent join the game...",
-        `Game code: "${gameCode}"`,
+        "Waiting when an opponent joins the game...",
+        `Game code: ${gameCode}`,
       ]->UI.MultilineText.make,
     )
     Promise.resolve(None)

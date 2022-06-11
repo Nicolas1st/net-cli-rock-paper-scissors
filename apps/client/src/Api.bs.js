@@ -42,7 +42,7 @@ function apiCall(path, method, body, bodyStruct, dataStruct) {
     body: options_body
   };
   return Undici.request(Env.apiHost + path, options).then(function (response) {
-                if (response.statusCode === 204) {
+                if (Belt_Option.getWithDefault(Belt_Int.fromString(response.headers["content-length"]), 0) === 0) {
                   return Promise.resolve(undefined);
                 } else {
                   return response.body.json();

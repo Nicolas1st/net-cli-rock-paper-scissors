@@ -28,7 +28,7 @@ let apiCall = (
   }
   Undici.Request.call(~url=`${Env.apiHost}${path}`, ~options, ())
   ->Promise.then(response => {
-    if response.statusCode === 204 {
+    if response.headers.contentLength->Belt.Int.fromString->Belt.Option.getWithDefault(0) === 0 {
       Promise.resolve(%raw(`undefined`))
     } else {
       response.body.json(.)

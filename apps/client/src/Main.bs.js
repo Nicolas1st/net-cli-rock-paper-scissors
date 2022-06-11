@@ -101,8 +101,8 @@ function renderer(appState) {
             if (match$1 === /* WaitingForOpponentJoin */0) {
               var gameCode = appState.gameCode;
               UI.message(UI.MultilineText.make([
-                        "Waiting when an opponent join the game...",
-                        "Game code: \"" + gameCode + "\""
+                        "Waiting when an opponent joins the game...",
+                        "Game code: " + gameCode
                       ]));
               return Promise.resolve(undefined);
             } else {
