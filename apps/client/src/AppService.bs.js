@@ -31,21 +31,28 @@ var machine = FSM.make((function (state, $$event) {
         if (state) {
           var tmp = state._0;
           if (typeof tmp === "number") {
-            if (tmp !== /* WaitingForOpponentJoin */0 && $$event.TAG !== /* OnGameStatus */0) {
-              return /* Status */{
-                      _0: {
-                        TAG: /* WaitingForOpponentMove */0,
-                        yourMove: $$event._0
-                      }
-                    };
+            if (tmp !== /* WaitingForOpponentJoin */0) {
+              if ($$event.TAG !== /* OnGameStatus */0) {
+                return /* Status */{
+                        _0: {
+                          TAG: /* WaitingForOpponentMove */0,
+                          yourMove: $$event._0
+                        }
+                      };
+              }
+              var match = $$event._0;
+              if (typeof match === "number" && match !== 0) {
+                return state;
+              }
+              
             }
             
           } else if (tmp.TAG === /* WaitingForOpponentMove */0) {
             if ($$event.TAG !== /* OnGameStatus */0) {
               return state;
             }
-            var match = $$event._0;
-            if (typeof match === "number" && match !== 0) {
+            var match$1 = $$event._0;
+            if (typeof match$1 === "number" && match$1 !== 0) {
               return state;
             }
             
@@ -131,15 +138,23 @@ var machine$1 = FSM.make((function (state, $$event) {
                   return state;
                 }
             case /* Game */2 :
-                if (typeof $$event === "number" || $$event.TAG !== /* GameEvent */3) {
+                if (typeof $$event === "number") {
                   return state;
-                } else {
+                }
+                if ($$event.TAG !== /* GameEvent */3) {
+                  return state;
+                }
+                var prevGameState = state.gameState;
+                var nextGameState = FSM.transition(machine, prevGameState, $$event._0);
+                if (Caml_obj.caml_notequal(nextGameState, prevGameState)) {
                   return {
                           TAG: /* Game */2,
                           userName: state.userName,
                           gameCode: state.gameCode,
-                          gameState: FSM.transition(machine, state.gameState, $$event._0)
+                          gameState: nextGameState
                         };
+                } else {
+                  return state;
                 }
             
           }
@@ -148,7 +163,7 @@ var machine$1 = FSM.make((function (state, $$event) {
 
 function make(createGame, joinGame, requestGameStatus, sendMove) {
   var service = FSM.interpret(machine$1);
-  var maybeGameStatusSyncTimeoutIdRef = {
+  var maybeGameStatusSyncIntervalIdRef = {
     contents: undefined
   };
   var syncGameStatus = function (gameCode, userName) {
@@ -164,9 +179,9 @@ function make(createGame, joinGame, requestGameStatus, sendMove) {
     
   };
   var stopGameStatusSync = function (param) {
-    var gameStatusSyncTimeoutId = maybeGameStatusSyncTimeoutIdRef.contents;
-    if (gameStatusSyncTimeoutId !== undefined) {
-      clearTimeout(gameStatusSyncTimeoutId);
+    var gameStatusSyncIntervalId = maybeGameStatusSyncIntervalIdRef.contents;
+    if (gameStatusSyncIntervalId !== undefined) {
+      clearInterval(gameStatusSyncIntervalId);
       return ;
     }
     
@@ -190,12 +205,12 @@ function make(createGame, joinGame, requestGameStatus, sendMove) {
               exit = 1;
             }
             if (exit === 1) {
-              var match$1 = maybeGameStatusSyncTimeoutIdRef.contents;
+              var match$1 = maybeGameStatusSyncIntervalIdRef.contents;
               if (match$1 !== undefined) {
                 
               } else {
                 syncGameStatus(gameCode, userName);
-                maybeGameStatusSyncTimeoutIdRef.contents = setTimeout((function (param) {
+                maybeGameStatusSyncIntervalIdRef.contents = setInterval((function (param) {
                         return syncGameStatus(gameCode, userName);
                       }), 3000);
               }

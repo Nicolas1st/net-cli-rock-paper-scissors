@@ -1,7 +1,7 @@
 @val external queueMicrotask: (unit => unit) => unit = "queueMicrotask"
 
 @val
-external setTimeout: (unit => unit, int) => int = "setTimeout"
+external setInterval: (unit => unit, int) => int = "setInterval"
 
 @val
-external clearTimeout: int => unit = "clearTimeout"
+external clearInterval: int => unit = "clearInterval"

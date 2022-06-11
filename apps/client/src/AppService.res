@@ -34,6 +34,7 @@ module GameMachine = {
 
   let machine = FSM.make(~reducer=(~state, ~event) => {
     switch (state, event) {
+    | (Status(ReadyToPlay), OnGameStatus(InProgress))
     | (Status(WaitingForOpponentMove(_)), OnGameStatus(InProgress)) => state
     | (Status(ReadyToPlay), SendMove(move)) => Status(WaitingForOpponentMove({yourMove: move}))
     | (_, OnGameStatus(gameStatusData)) =>
@@ -85,13 +86,16 @@ let machine = FSM.make(~reducer=(~state, ~event) => {
       gameState: GameMachine.machine->FSM.getInitialState,
     })
   | (Game(gameContext), GameEvent(gameEvent)) =>
-    Game({
-      ...gameContext,
-      gameState: GameMachine.machine->FSM.transition(
-        ~state=gameContext.gameState,
-        ~event=gameEvent,
-      ),
-    })
+    let prevGameState = gameContext.gameState
+    let nextGameState = GameMachine.machine->FSM.transition(~state=prevGameState, ~event=gameEvent)
+    if nextGameState != prevGameState {
+      Game({
+        ...gameContext,
+        gameState: nextGameState,
+      })
+    } else {
+      state
+    }
   | (_, _) => state
   }
 }, ~initialState=Menu)
@@ -103,7 +107,7 @@ let make = (
   ~sendMove: SendMovePort.t,
 ) => {
   let service = machine->FSM.interpret
-  let maybeGameStatusSyncTimeoutIdRef = ref(None)
+  let maybeGameStatusSyncIntervalIdRef = ref(None)
 
   let syncGameStatus = (~gameCode, ~userName) => {
     requestGameStatus(~gameCode, ~userName)
@@ -113,8 +117,8 @@ let make = (
     ->ignore
   }
   let stopGameStatusSync = () => {
-    switch maybeGameStatusSyncTimeoutIdRef.contents {
-    | Some(gameStatusSyncTimeoutId) => Global.clearTimeout(gameStatusSyncTimeoutId)
+    switch maybeGameStatusSyncIntervalIdRef.contents {
+    | Some(gameStatusSyncIntervalId) => Global.clearInterval(gameStatusSyncIntervalId)
     | None => ()
     }
   }
@@ -123,11 +127,11 @@ let make = (
     switch state {
     | Game({gameState: Status(Finished(_))}) => stopGameStatusSync()
     | Game({userName, gameCode}) =>
-      switch maybeGameStatusSyncTimeoutIdRef.contents {
+      switch maybeGameStatusSyncIntervalIdRef.contents {
       | Some(_) => ()
       | None => {
           syncGameStatus(~gameCode, ~userName)
-          maybeGameStatusSyncTimeoutIdRef.contents = Some(Global.setTimeout(() => {
+          maybeGameStatusSyncIntervalIdRef.contents = Some(Global.setInterval(() => {
               syncGameStatus(~gameCode, ~userName)
             }, 3000))
         }
