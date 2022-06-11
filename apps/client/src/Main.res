@@ -100,7 +100,7 @@ module GameStatusWaitingForOpponentMoveRenderer = {
   let make = (~yourMove: Game.Move.t) => {
     UI.message(
       [
-        "Waiting for the opponent move...",
+        "Waiting for your opponent's move...",
         `Your move: ${yourMove->moveToText}`,
       ]->UI.MultilineText.make,
     )

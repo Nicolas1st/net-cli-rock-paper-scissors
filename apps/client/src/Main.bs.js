@@ -122,7 +122,7 @@ function renderer(appState) {
           if (match$1.TAG === /* WaitingForOpponentMove */0) {
             var yourMove = match$1.yourMove;
             UI.message(UI.MultilineText.make([
-                      "Waiting for the opponent move...",
+                      "Waiting for your opponent's move...",
                       "Your move: " + moveToText(yourMove)
                     ]));
             return Promise.resolve(undefined);
