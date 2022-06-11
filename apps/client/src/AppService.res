@@ -1,9 +1,9 @@
 module Port = {
-  module RequestJoinGame = {
+  module JoinGame = {
     type t = (~userName: string, ~gameCode: string) => Promise.t<result<unit, unit>>
   }
 
-  module RequestCreateGame = {
+  module CreateGame = {
     type data = {gameCode: string}
     type t = (~userName: string) => Promise.t<result<data, unit>>
   }
@@ -36,25 +36,22 @@ let machine = FSM.make(~reducer=(~state, ~event) => {
   }
 }, ~initialState=Menu)
 
-let make = (
-  ~requestCreateGame: Port.RequestCreateGame.t,
-  ~requestJoinGame: Port.RequestJoinGame.t,
-) => {
+let make = (~createGame: Port.CreateGame.t, ~joinGame: Port.JoinGame.t) => {
   let service = machine->FSM.interpret
   let _ = service->FSM.subscribe(state => {
     switch state {
     | CreatingGame({userName}) =>
-      requestCreateGame(~userName)
+      createGame(~userName)
       ->Promise.thenResolve(result => {
         switch result {
-        | Ok({Port.RequestCreateGame.gameCode: gameCode}) =>
+        | Ok({Port.CreateGame.gameCode: gameCode}) =>
           service->FSM.send(OnCreateGameSuccess({gameCode: gameCode}))
         | Error() => service->FSM.send(OnCreateGameFailure)
         }
       })
       ->ignore
     | JoiningGame({userName, gameCode}) =>
-      requestJoinGame(~userName, ~gameCode)
+      joinGame(~userName, ~gameCode)
       ->Promise.thenResolve(result => {
         switch result {
         | Ok() => service->FSM.send(OnJoinGameSuccess)
