@@ -148,7 +148,60 @@ var machine$1 = FSM.make((function (state, $$event) {
 
 function make(createGame, joinGame, requestGameStatus, sendMove) {
   var service = FSM.interpret(machine$1);
+  var maybeGameStatusSyncTimeoutIdRef = {
+    contents: undefined
+  };
+  var syncGameStatus = function (gameCode, userName) {
+    Curry._2(requestGameStatus, userName, gameCode).then(function (data) {
+          return FSM.send(service, {
+                      TAG: /* GameEvent */3,
+                      _0: {
+                        TAG: /* OnGameStatus */0,
+                        _0: data
+                      }
+                    });
+        });
+    
+  };
+  var stopGameStatusSync = function (param) {
+    var gameStatusSyncTimeoutId = maybeGameStatusSyncTimeoutIdRef.contents;
+    if (gameStatusSyncTimeoutId !== undefined) {
+      clearTimeout(gameStatusSyncTimeoutId);
+      return ;
+    }
+    
+  };
   FSM.subscribe(service, (function (state) {
+          if (typeof state === "number" || state.TAG !== /* Game */2) {
+            stopGameStatusSync(undefined);
+          } else {
+            var match = state.gameState;
+            var gameCode = state.gameCode;
+            var userName = state.userName;
+            var exit = 0;
+            if (match) {
+              var tmp = match._0;
+              if (typeof tmp === "number" || tmp.TAG !== /* Finished */1) {
+                exit = 1;
+              } else {
+                stopGameStatusSync(undefined);
+              }
+            } else {
+              exit = 1;
+            }
+            if (exit === 1) {
+              var match$1 = maybeGameStatusSyncTimeoutIdRef.contents;
+              if (match$1 !== undefined) {
+                
+              } else {
+                syncGameStatus(gameCode, userName);
+                maybeGameStatusSyncTimeoutIdRef.contents = setTimeout((function (param) {
+                        return syncGameStatus(gameCode, userName);
+                      }), 3000);
+              }
+            }
+            
+          }
           if (typeof state === "number") {
             if (state === /* Menu */0) {
               return ;
@@ -173,31 +226,19 @@ function make(createGame, joinGame, requestGameStatus, sendMove) {
                       });
                   return ;
               case /* Game */2 :
-                  var match = state.gameState;
-                  var gameCode = state.gameCode;
-                  var userName = state.userName;
-                  if (match) {
-                    var match$1 = match._0;
-                    if (typeof match$1 === "number") {
-                      return ;
-                    }
-                    if (match$1.TAG !== /* WaitingForOpponentMove */0) {
-                      return ;
-                    }
-                    Curry._3(sendMove, userName, gameCode, match$1.yourMove);
-                    return ;
-                  } else {
-                    Curry._2(requestGameStatus, userName, gameCode).then(function (data) {
-                          return FSM.send(service, {
-                                      TAG: /* GameEvent */3,
-                                      _0: {
-                                        TAG: /* OnGameStatus */0,
-                                        _0: data
-                                      }
-                                    });
-                        });
+                  var match$2 = state.gameState;
+                  if (!match$2) {
                     return ;
                   }
+                  var match$3 = match$2._0;
+                  if (typeof match$3 === "number") {
+                    return ;
+                  }
+                  if (match$3.TAG !== /* WaitingForOpponentMove */0) {
+                    return ;
+                  }
+                  Curry._3(sendMove, state.userName, state.gameCode, match$3.yourMove);
+                  return ;
               
             }
           }
