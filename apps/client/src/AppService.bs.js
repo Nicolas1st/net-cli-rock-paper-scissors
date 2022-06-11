@@ -2,6 +2,7 @@
 
 var FSM = require("./utils/FSM.bs.js");
 var Curry = require("rescript/lib/js/curry.js");
+var GameService = require("./GameService.bs.js");
 
 var JoinGame = {};
 
@@ -44,28 +45,25 @@ var machine = FSM.make((function (state, $$event) {
                 } else if ($$event.TAG === /* OnCreateGameSuccess */1) {
                   return {
                           TAG: /* Game */2,
-                          gameCode: $$event.gameCode,
-                          userName: state.userName
+                          _0: $$event._0
                         };
                 } else {
                   return state;
                 }
             case /* JoiningGame */1 :
-                if (typeof $$event !== "number") {
+                if (typeof $$event === "number") {
+                  if ($$event === /* OnJoinGameFailure */1) {
+                    return /* Menu */0;
+                  } else {
+                    return state;
+                  }
+                } else if ($$event.TAG === /* OnJoinGameSuccess */3) {
+                  return {
+                          TAG: /* Game */2,
+                          _0: $$event._0
+                        };
+                } else {
                   return state;
-                }
-                switch ($$event) {
-                  case /* OnCreateGameFailure */0 :
-                      return state;
-                  case /* OnJoinGameSuccess */1 :
-                      return {
-                              TAG: /* Game */2,
-                              gameCode: state.gameCode,
-                              userName: state.userName
-                            };
-                  case /* OnJoinGameFailure */2 :
-                      return /* Menu */0;
-                  
                 }
             case /* Game */2 :
                 return state;
@@ -82,11 +80,12 @@ function make(createGame, joinGame) {
           }
           switch (state.TAG | 0) {
             case /* CreatingGame */0 :
-                Curry._1(createGame, state.userName).then(function (result) {
+                var userName = state.userName;
+                Curry._1(createGame, userName).then(function (result) {
                       if (result.TAG === /* Ok */0) {
                         return FSM.send(service, {
                                     TAG: /* OnCreateGameSuccess */1,
-                                    gameCode: result._0.gameCode
+                                    _0: GameService.make(result._0.gameCode, userName)
                                   });
                       } else {
                         return FSM.send(service, /* OnCreateGameFailure */0);
@@ -94,11 +93,16 @@ function make(createGame, joinGame) {
                     });
                 return ;
             case /* JoiningGame */1 :
-                Curry._2(joinGame, state.userName, state.gameCode).then(function (result) {
+                var gameCode = state.gameCode;
+                var userName$1 = state.userName;
+                Curry._2(joinGame, userName$1, gameCode).then(function (result) {
                       if (result.TAG === /* Ok */0) {
-                        return FSM.send(service, /* OnJoinGameSuccess */1);
+                        return FSM.send(service, {
+                                    TAG: /* OnJoinGameSuccess */3,
+                                    _0: GameService.make(gameCode, userName$1)
+                                  });
                       } else {
-                        return FSM.send(service, /* OnJoinGameFailure */2);
+                        return FSM.send(service, /* OnJoinGameFailure */1);
                       }
                     });
                 return ;

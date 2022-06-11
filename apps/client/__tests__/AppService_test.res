@@ -15,9 +15,9 @@ asyncTest("Works", t => {
     )
 
     let _ = service->FSM.subscribe(state => {
-      // Test exit condition
-      if state == AppService.CreatingGame({userName: "Dmitry"}) {
-        resolve(. Obj.magic(""))
+      switch state {
+      | CreatingGame(_) => resolve(. Obj.magic(""))
+      | _ => ()
       }
     })
 

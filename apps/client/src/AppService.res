@@ -13,24 +13,22 @@ type state =
   | Menu
   | CreatingGame({userName: string})
   | JoiningGame({userName: string, gameCode: string})
-  | Game({gameCode: string, userName: string})
+  | Game(GameService.t)
 type event =
   | CreateGame({userName: string})
-  | OnCreateGameSuccess({gameCode: string})
+  | OnCreateGameSuccess(GameService.t)
   | OnCreateGameFailure
   | JoinGame({userName: string, gameCode: string})
-  | OnJoinGameSuccess
+  | OnJoinGameSuccess(GameService.t)
   | OnJoinGameFailure
 
 let machine = FSM.make(~reducer=(~state, ~event) => {
   switch (state, event) {
   | (Menu, CreateGame({userName})) => CreatingGame({userName: userName})
-  | (CreatingGame({userName}), OnCreateGameSuccess({gameCode})) =>
-    Game({gameCode: gameCode, userName: userName})
+  | (CreatingGame(_), OnCreateGameSuccess(gameService)) => Game(gameService)
   | (CreatingGame(_), OnCreateGameFailure) => Menu
   | (Menu, JoinGame({userName, gameCode})) => JoiningGame({userName: userName, gameCode: gameCode})
-  | (JoiningGame({userName, gameCode}), OnJoinGameSuccess) =>
-    Game({gameCode: gameCode, userName: userName})
+  | (JoiningGame(_), OnJoinGameSuccess(gameService)) => Game(gameService)
   | (JoiningGame(_), OnJoinGameFailure) => Menu
   | (_, _) => state
   }
@@ -45,7 +43,7 @@ let make = (~createGame: Port.CreateGame.t, ~joinGame: Port.JoinGame.t) => {
       ->Promise.thenResolve(result => {
         switch result {
         | Ok({Port.CreateGame.gameCode: gameCode}) =>
-          service->FSM.send(OnCreateGameSuccess({gameCode: gameCode}))
+          service->FSM.send(OnCreateGameSuccess(GameService.make(~gameCode, ~userName)))
         | Error() => service->FSM.send(OnCreateGameFailure)
         }
       })
@@ -54,7 +52,7 @@ let make = (~createGame: Port.CreateGame.t, ~joinGame: Port.JoinGame.t) => {
       joinGame(~userName, ~gameCode)
       ->Promise.thenResolve(result => {
         switch result {
-        | Ok() => service->FSM.send(OnJoinGameSuccess)
+        | Ok() => service->FSM.send(OnJoinGameSuccess(GameService.make(~gameCode, ~userName)))
         | Error() => service->FSM.send(OnJoinGameFailure)
         }
       })

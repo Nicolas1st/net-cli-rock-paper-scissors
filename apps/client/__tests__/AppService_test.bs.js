@@ -2,7 +2,6 @@
 
 var FSM = require("../src/utils/FSM.bs.js");
 var Ava = require("ava").default;
-var Caml_obj = require("rescript/lib/js/caml_obj.js");
 var AppService = require("../src/AppService.bs.js");
 
 Ava("Works", (function (t) {
@@ -20,13 +19,11 @@ Ava("Works", (function (t) {
                               return t.fail("Test CreateGameFlow");
                             }));
                       FSM.subscribe(service, (function (state) {
-                              if (Caml_obj.caml_equal(state, {
-                                      TAG: /* CreatingGame */0,
-                                      userName: "Dmitry"
-                                    })) {
+                              if (typeof state === "number" || state.TAG !== /* CreatingGame */0) {
+                                return ;
+                              } else {
                                 return resolve("");
                               }
-                              
                             }));
                       t.deepEqual(FSM.getCurrentState(service), /* Menu */0, undefined);
                       FSM.send(service, {
