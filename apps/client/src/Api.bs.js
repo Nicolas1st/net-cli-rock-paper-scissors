@@ -54,13 +54,32 @@ var CreateGame = {
   call: call
 };
 
+var bodyStruct$1 = S.record2([
+      [
+        "userName",
+        S.string(undefined)
+      ],
+      [
+        "gameCode",
+        S.string(undefined)
+      ]
+    ], undefined, (function (param) {
+        return {
+                TAG: /* Ok */0,
+                _0: [
+                  param.userName,
+                  param.gameCode
+                ]
+              };
+      }), undefined);
+
 function call$1(userName, gameCode) {
   return Undici.request(host + "/game", {
                   method: "POST",
-                  body: {
-                    userName: userName,
-                    gameCode: gameCode
-                  }
+                  body: Belt_Result.getExn(S.serializeWith({
+                            userName: userName,
+                            gameCode: gameCode
+                          }, undefined, S.json(bodyStruct$1)))
                 }).then(function (response) {
                 return Curry._1(response.body.json, undefined);
               }).then(function (param) {
@@ -72,6 +91,7 @@ function call$1(userName, gameCode) {
 }
 
 var JoinGame = {
+  bodyStruct: bodyStruct$1,
   call: call$1
 };
 

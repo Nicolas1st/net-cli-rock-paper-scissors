@@ -35,10 +35,22 @@ module CreateGame = {
 }
 
 module JoinGame = {
+  type body = {userName: string, gameCode: string}
+  let bodyStruct = S.record2(
+    ~fields=(("userName", S.string()), ("gameCode", S.string())),
+    ~destructor=({userName, gameCode}) => (userName, gameCode)->Ok,
+    (),
+  )
   let call: AppService.Port.JoinGame.t = (~userName, ~gameCode) => {
     Undici.Request.call(
       ~url=`${host}/game`,
-      ~options={method: #POST, body: Obj.magic({"userName": userName, "gameCode": gameCode})},
+      ~options={
+        method: #POST,
+        body: {userName: userName, gameCode: gameCode}
+        ->S.serializeWith(bodyStruct->S.json)
+        ->Belt.Result.getExn
+        ->Obj.magic,
+      },
       (),
     )
     ->Promise.then(response => response.body.json())
