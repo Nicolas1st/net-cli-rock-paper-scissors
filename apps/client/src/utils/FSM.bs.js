@@ -27,10 +27,13 @@ function interpret(machine) {
 
 function send(service, $$event) {
   var newState = Curry._2(service.fsm.reducer, service.state, $$event);
-  service.state = newState;
-  service.subscribtionSet.forEach(function (fn) {
-        return Curry._1(fn, newState);
-      });
+  if (newState !== service.state) {
+    service.state = newState;
+    service.subscribtionSet.forEach(function (fn) {
+          return Curry._1(fn, newState);
+        });
+    return ;
+  }
   
 }
 
@@ -46,6 +49,11 @@ function getCurrentState(service) {
   return service.state;
 }
 
+function stop(service) {
+  service.subscribtionSet.clear();
+  
+}
+
 exports.make = make;
 exports.transition = transition;
 exports.getInitialState = getInitialState;
@@ -53,4 +61,5 @@ exports.interpret = interpret;
 exports.send = send;
 exports.subscribe = subscribe;
 exports.getCurrentState = getCurrentState;
+exports.stop = stop;
 /* No side effect */
