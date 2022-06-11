@@ -58,15 +58,18 @@ type state =
   | CreatingGame({userName: string})
   | JoiningGame({userName: string, gameCode: string})
   | Game({userName: string, gameCode: string, gameState: GameMachine.state})
+  | Exiting
 type event =
   | CreateGame({userName: string})
   | OnCreateGameSuccess({gameCode: string})
   | JoinGame({userName: string, gameCode: string})
   | OnJoinGameSuccess
   | GameEvent(GameMachine.event)
+  | Exit
 
 let machine = FSM.make(~reducer=(~state, ~event) => {
   switch (state, event) {
+  | (_, Exit) if state != Exiting => Exiting
   | (Menu, CreateGame({userName})) => CreatingGame({userName: userName})
   | (CreatingGame({userName}), OnCreateGameSuccess({gameCode})) =>
     Game({
@@ -122,6 +125,10 @@ let make = (
       ->ignore
     | Game({gameState: Status(WaitingForOpponentMove({yourMove})), userName, gameCode}) =>
       sendMove(~gameCode, ~userName, ~move=yourMove)->ignore
+    | Exiting =>
+      Global.queueMicrotask(() => {
+        service->FSM.stop
+      })
     | _ => ()
     }
   })

@@ -1,7 +1,7 @@
 open Ava
 
 asyncTest("Successfully create game and start waiting for player", t => {
-  t->Ava.ExecutionContext.plan(8)
+  t->Ava.ExecutionContext.plan(9)
 
   let stepNumberRef = ref(1)
 
@@ -34,6 +34,12 @@ asyncTest("Successfully create game and start waiting for player", t => {
       | Game({gameState: Loading}) => t->Assert.is(stepNumberRef.contents, 3, ())
       | Game({gameState: Status(WaitingForOpponentJoin)}) => {
           t->Assert.is(stepNumberRef.contents, 4, ())
+
+          service->FSM.send(AppService.Exit)
+        }
+      | Exiting => {
+          t->Assert.is(stepNumberRef.contents, 5, ())
+
           resolve(. Obj.magic(""))
         }
       | _ => ()
@@ -47,7 +53,7 @@ asyncTest("Successfully create game and start waiting for player", t => {
 })
 
 asyncTest("Successfully join game and start playing", t => {
-  t->Ava.ExecutionContext.plan(16)
+  t->Ava.ExecutionContext.plan(17)
 
   let stepNumberRef = ref(1)
 
@@ -108,6 +114,11 @@ asyncTest("Successfully join game and start playing", t => {
           t->Assert.deepEqual(opponentsMove, Scissors, ())
           t->Assert.deepEqual(outcome, Win, ())
           t->Assert.is(stepNumberRef.contents, 6, ())
+
+          service->FSM.send(AppService.Exit)
+        }
+      | Exiting => {
+          t->Assert.is(stepNumberRef.contents, 7, ())
 
           resolve(. Obj.magic(""))
         }

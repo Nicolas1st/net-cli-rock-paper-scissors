@@ -60,7 +60,7 @@ module ManuRenderer = {
             Some(AppService.JoinGame({userName: userName, gameCode: gameCode}))
           })
         })
-      | #exit => Js.Exn.raiseError("TODO: exit 0")
+      | #exit => Some(AppService.Exit)->Promise.resolve
       }
     })
 }
@@ -145,6 +145,7 @@ let renderer = (appState: AppService.state) => {
     GameStatusWaitingForOpponentMoveRenderer.make(~yourMove)
   | Game({gameState: Status(Finished({outcome, yourMove, opponentsMove}))}) =>
     GameStatusFinishedRenderer.make(~outcome, ~yourMove, ~opponentsMove)
+  | Exiting => %raw(`process.exit(0)`)
   }
 }
 

@@ -5,6 +5,7 @@ module Set = {
   @send external add: (t<'item>, 'item) => t<'item> = "add"
   @send external delete: (t<'item>, 'item) => bool = "delete"
   @send external forEach: (t<'item>, 'item => unit) => unit = "forEach"
+  @send external clear: t<'item> => unit = "clear"
 }
 
 type t<'state, 'event> = {
@@ -49,4 +50,9 @@ let subscribe = (service, fn) => {
 
 let getCurrentState = service => {
   service.state
+}
+
+let stop = service => {
+  // TODO: stop handling transitions
+  service.subscribtionSet->Set.clear
 }

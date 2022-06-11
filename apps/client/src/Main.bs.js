@@ -5,7 +5,6 @@ var Api = require("./Api.bs.js");
 var FSM = require("./utils/FSM.bs.js");
 var Game = require("./Game.bs.js");
 var Curry = require("rescript/lib/js/curry.js");
-var Js_exn = require("rescript/lib/js/js_exn.js");
 var Nickname = require("./Nickname.bs.js");
 var AppService = require("./AppService.bs.js");
 var Belt_Option = require("rescript/lib/js/belt_Option.js");
@@ -78,7 +77,7 @@ function make(param) {
                                       });
                           });
               } else {
-                return Js_exn.raiseError("TODO: exit 0");
+                return Promise.resolve(/* Exit */1);
               }
             });
 }
@@ -175,7 +174,11 @@ var GameStatusFinishedRenderer = {
 
 function renderer(appState) {
   if (typeof appState === "number") {
-    return make(undefined);
+    if (appState === /* Menu */0) {
+      return make(undefined);
+    } else {
+      return (process.exit(0));
+    }
   }
   switch (appState.TAG | 0) {
     case /* CreatingGame */0 :

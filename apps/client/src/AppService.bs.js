@@ -77,7 +77,17 @@ var GameMachine = {
 };
 
 var machine$1 = FSM.make((function (state, $$event) {
+        if (typeof $$event === "number" && $$event !== 0) {
+          if (state !== /* Exiting */1) {
+            return /* Exiting */1;
+          } else {
+            return state;
+          }
+        }
         if (typeof state === "number") {
+          if (state !== /* Menu */0) {
+            return state;
+          }
           if (typeof $$event === "number") {
             return state;
           }
@@ -140,49 +150,56 @@ function make(createGame, joinGame, requestGameStatus, sendMove) {
   var service = FSM.interpret(machine$1);
   FSM.subscribe(service, (function (state) {
           if (typeof state === "number") {
+            if (state === /* Menu */0) {
+              return ;
+            }
+            queueMicrotask(function (param) {
+                  return FSM.stop(service);
+                });
             return ;
-          }
-          switch (state.TAG | 0) {
-            case /* CreatingGame */0 :
-                Curry._1(createGame, state.userName).then(function (param) {
-                      return FSM.send(service, {
-                                  TAG: /* OnCreateGameSuccess */1,
-                                  gameCode: param.gameCode
-                                });
-                    });
-                return ;
-            case /* JoiningGame */1 :
-                Curry._2(joinGame, state.userName, state.gameCode).then(function (param) {
-                      return FSM.send(service, /* OnJoinGameSuccess */0);
-                    });
-                return ;
-            case /* Game */2 :
-                var match = state.gameState;
-                var gameCode = state.gameCode;
-                var userName = state.userName;
-                if (match) {
-                  var match$1 = match._0;
-                  if (typeof match$1 === "number") {
-                    return ;
-                  }
-                  if (match$1.TAG !== /* WaitingForOpponentMove */0) {
-                    return ;
-                  }
-                  Curry._3(sendMove, userName, gameCode, match$1.yourMove);
-                  return ;
-                } else {
-                  Curry._2(requestGameStatus, userName, gameCode).then(function (data) {
+          } else {
+            switch (state.TAG | 0) {
+              case /* CreatingGame */0 :
+                  Curry._1(createGame, state.userName).then(function (param) {
                         return FSM.send(service, {
-                                    TAG: /* GameEvent */3,
-                                    _0: {
-                                      TAG: /* OnGameStatus */0,
-                                      _0: data
-                                    }
+                                    TAG: /* OnCreateGameSuccess */1,
+                                    gameCode: param.gameCode
                                   });
                       });
                   return ;
-                }
-            
+              case /* JoiningGame */1 :
+                  Curry._2(joinGame, state.userName, state.gameCode).then(function (param) {
+                        return FSM.send(service, /* OnJoinGameSuccess */0);
+                      });
+                  return ;
+              case /* Game */2 :
+                  var match = state.gameState;
+                  var gameCode = state.gameCode;
+                  var userName = state.userName;
+                  if (match) {
+                    var match$1 = match._0;
+                    if (typeof match$1 === "number") {
+                      return ;
+                    }
+                    if (match$1.TAG !== /* WaitingForOpponentMove */0) {
+                      return ;
+                    }
+                    Curry._3(sendMove, userName, gameCode, match$1.yourMove);
+                    return ;
+                  } else {
+                    Curry._2(requestGameStatus, userName, gameCode).then(function (data) {
+                          return FSM.send(service, {
+                                      TAG: /* GameEvent */3,
+                                      _0: {
+                                        TAG: /* OnGameStatus */0,
+                                        _0: data
+                                      }
+                                    });
+                        });
+                    return ;
+                  }
+              
+            }
           }
         }));
   return service;
