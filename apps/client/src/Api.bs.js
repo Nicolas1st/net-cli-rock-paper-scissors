@@ -43,9 +43,12 @@ function apiCall(path, method, body, bodyStruct, dataStruct) {
     body: options_body
   };
   return Undici.request(host + path, options).then(function (response) {
-                return response.body.json();
+                if (response.statusCode === 204) {
+                  return Promise.resolve(undefined);
+                } else {
+                  return response.body.json();
+                }
               }).then(function (unknown) {
-              console.log(host + path, options, unknown);
               return unwrapResult(S.parseWith(unknown, undefined, dataStruct));
             });
 }
@@ -180,7 +183,7 @@ var bodyStruct$2 = S.record2([
 var backendStatusStruct = S.record1([
         "status",
         S.transform(S.string(undefined), (function (value) {
-                if (value === "finished" || value === "InProcess" || value === "waiting") {
+                if (value === "finished" || value === "waiting" || value === "inProcess") {
                   return {
                           TAG: /* Ok */0,
                           _0: value
@@ -260,10 +263,10 @@ var gameResultStruct = S.record1([
 
 var dataStruct$1 = S.transformUnknown(S.unknown(undefined), (function (unknown) {
         return Belt_Result.flatMap(S.parseWith(unknown, undefined, backendStatusStruct), (function (backendStatusType) {
-                      if (backendStatusType === "InProcess") {
+                      if (backendStatusType === "waiting") {
                         return {
                                 TAG: /* Ok */0,
-                                _0: /* InProgress */1
+                                _0: /* WaitingForOpponentJoin */0
                               };
                       } else if (backendStatusType === "finished") {
                         return Belt_Result.map(S.parseWith(unknown, undefined, gameResultStruct), (function (finishedContext) {
@@ -274,7 +277,7 @@ var dataStruct$1 = S.transformUnknown(S.unknown(undefined), (function (unknown) 
                       } else {
                         return {
                                 TAG: /* Ok */0,
-                                _0: /* WaitingForOpponentJoin */0
+                                _0: /* InProgress */1
                               };
                       }
                     }));

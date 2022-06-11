@@ -29,10 +29,14 @@ let apiCall = (
     body: body->S.serializeWith(bodyStruct->S.json->Obj.magic)->unwrapResult->Obj.magic,
   }
   Undici.Request.call(~url=`${host}${path}`, ~options, ())
-  ->Promise.then(response => response.body.json(.))
+  ->Promise.then(response => {
+    if response.statusCode === 204 {
+      Promise.resolve(%raw(`undefined`))
+    } else {
+      response.body.json(.)
+    }
+  })
   ->Promise.thenResolve(unknown => {
-    Js.log3(`${host}${path}`, options, unknown)
-
     unknown->S.parseWith(dataStruct)->unwrapResult
   })
 }
@@ -98,7 +102,7 @@ module RequestGameStatus = {
     ~destructor=({userName, gameCode}) => (userName, gameCode)->Ok,
     (),
   )
-  type backendStatusType = [#waiting | #InProcess | #finished]
+  type backendStatusType = [#waiting | #inProcess | #finished]
   let backendStatusStruct = S.record1(
     ~fields=("status", S.string()->S.transform(~constructor=value => {
         switch Obj.magic(value) {
@@ -135,7 +139,7 @@ module RequestGameStatus = {
     ->Belt.Result.flatMap(backendStatusType => {
       switch backendStatusType {
       | #waiting => AppService.RequestGameStatusPort.WaitingForOpponentJoin->Ok
-      | #InProcess => AppService.RequestGameStatusPort.InProgress->Ok
+      | #inProcess => AppService.RequestGameStatusPort.InProgress->Ok
       | #finished =>
         unknown
         ->S.parseWith(gameResultStruct)
