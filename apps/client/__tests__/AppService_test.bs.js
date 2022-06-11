@@ -25,7 +25,7 @@ Ava("Works", (function (t) {
                               t.deepEqual(gameCode, "1234", undefined);
                               return Promise.resolve({
                                           TAG: /* Ok */0,
-                                          _0: /* WaitingForPlayer */0
+                                          _0: /* WaitingForOpponentJoin */0
                                         });
                             }));
                       FSM.subscribe(service, (function (state) {

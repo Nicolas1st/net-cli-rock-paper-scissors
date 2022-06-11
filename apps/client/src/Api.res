@@ -81,7 +81,7 @@ module RequestGameStatus = {
     )
     ->Promise.then(response => response.body.json())
     ->Promise.thenResolve(_ => {
-      Ok(Game.WaitingForPlayer)
+      Ok(Game.WaitingForOpponentJoin)
     })
   }
 }

@@ -17,7 +17,7 @@ asyncTest("Works", t => {
       ~requestGameStatus=(~userName, ~gameCode) => {
         t->Assert.deepEqual(userName, "Dmitry", ())
         t->Assert.deepEqual(gameCode, "1234", ())
-        Promise.resolve(Ok(Game.WaitingForPlayer))
+        Promise.resolve(Ok(Game.WaitingForOpponentJoin))
       },
     )
 
@@ -29,7 +29,7 @@ asyncTest("Works", t => {
           t->Assert.is(stepNumberRef.contents, 2, ())
         }
       | Game({gameState: Loading}) => t->Assert.is(stepNumberRef.contents, 3, ())
-      | Game({gameState: Status(WaitingForPlayer)}) => {
+      | Game({gameState: Status(WaitingForOpponentJoin)}) => {
           t->Assert.is(stepNumberRef.contents, 4, ())
           resolve(. Obj.magic(""))
         }

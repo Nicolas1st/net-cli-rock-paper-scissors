@@ -65,20 +65,80 @@ module CreatingGameRenderer = {
   }
 }
 
-let rec renderer = (appState: AppService.state) => {
+module JoiningGameRenderer = {
+  let make = () => {
+    UI.message("Joining game...")
+    Promise.resolve(None)
+  }
+}
+
+module GameLoadingRenderer = {
+  let make = () => {
+    UI.message("Loading game...")
+    Promise.resolve(None)
+  }
+}
+
+module GameStatusWaitingForOpponentJoinRenderer = {
+  let make = () => {
+    UI.message("Waiting when an opponent join the game...")
+    Promise.resolve(None)
+  }
+}
+
+module GameStatusWaitingForOpponentPlayRenderer = {
+  let make = () => {
+    UI.message("Waiting for an opponent object...")
+    Promise.resolve(None)
+  }
+}
+
+module GameStatusReadyToPlayRenderer = {
+  let make = () => {
+    UI.message("Ready to play! TODO: add moves")
+    Promise.resolve(None)
+  }
+}
+
+module GameStatusFinishedRenderer = {
+  let moveToText = (move: Game.move) =>
+    switch move {
+    | Rock => `Rock 🪨`
+    | Scissors => `Scissors ✂️`
+    | Paper => `Paper 📄`
+    }
+  let make = (~outcome: Game.outcome, ~yourMove, ~opponentsMove) => {
+    let outcomeText = switch outcome {
+    | Win => `You won 🏆`
+    | Draw => `Draw 🤝`
+    | Loss => `You lost 🪦`
+    }
+
+    UI.message(
+      [
+        "Game finished!",
+        `Outcome: ${outcomeText}`,
+        `Your move: ${yourMove->moveToText}`,
+        `Opponent's move: ${opponentsMove->moveToText}`,
+      ]->Js.Array2.joinWith("\n"),
+    )
+    Promise.resolve(None)
+  }
+}
+
+let renderer = (appState: AppService.state) => {
   switch appState {
   | Menu => ManuRenderer.make()
   | CreatingGame(_) => CreatingGameRenderer.make()
-  | _ =>
-    UI.Confirm.prompt(
-      ~message=`Unknown state, do you want to exit? (${appState->Js.Json.serializeExn})`,
-    )->Promise.then(answer => {
-      if answer {
-        Js.Exn.raiseError("TODO: exit 0")
-      } else {
-        renderer(appState)
-      }
-    })
+  | JoiningGame(_) => JoiningGameRenderer.make()
+  | Game({gameState: Loading}) => GameLoadingRenderer.make()
+  | Game({gameState: Status(WaitingForOpponentJoin)}) =>
+    GameStatusWaitingForOpponentJoinRenderer.make()
+  | Game({gameState: Status(ReadyToPlay)}) => GameStatusReadyToPlayRenderer.make()
+  | Game({gameState: Status(WaitingForOpponentPlay)}) =>
+    GameStatusWaitingForOpponentPlayRenderer.make()
+  | Game({gameState: Status(Finished({outcome, yourMove, opponentsMove}))}) =>
+    GameStatusFinishedRenderer.make(~outcome, ~yourMove, ~opponentsMove)
   }
 }
 
@@ -88,6 +148,17 @@ let run = () => {
     ~joinGame=Api.JoinGame.call,
     ~requestGameStatus=Api.RequestGameStatus.call,
   )
+  // let service = AppService.make(
+  //   ~createGame=(~userName as _) => {
+  //     Promise.resolve(Ok({AppService.CreateGamePort.gameCode: "1234"}))
+  //   },
+  //   ~joinGame=(~userName as _, ~gameCode as _) => {
+  //     Promise.resolve(Ok())
+  //   },
+  //   ~requestGameStatus=(~userName as _, ~gameCode as _) => {
+  //     Promise.resolve(Ok(Game.Finished({outcome: Win, yourMove: Rock, opponentsMove: Scissors})))
+  //   },
+  // )
   let render = state' =>
     renderer(state')
     ->Promise.thenResolve(answer => {

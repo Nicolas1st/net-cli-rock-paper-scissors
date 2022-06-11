@@ -1,7 +1,7 @@
 type outcome = Draw | Win | Loss
 type move = Rock | Scissors | Paper
 type status =
-  | WaitingForPlayer
+  | WaitingForOpponentJoin
   | ReadyToPlay
   | WaitingForOpponentPlay
   | Finished({outcome: outcome, yourMove: move, opponentsMove: move})
