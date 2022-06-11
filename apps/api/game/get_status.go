@@ -3,9 +3,9 @@ package game
 import "errors"
 
 type Result struct {
-	Outcome       gameResult
-	YourMove      Move
-	OpponentsMove Move
+	Outcome       gameResult `json:"outcome"`
+	YourMove      Move       `json:"yourMove"`
+	OpponentsMove Move       `json:"opponentsMove"`
 }
 
 func (s *gameStorer) GetGameStatus(gameCode uint, username string) (GameStatus, Result, error) {
