@@ -1,5 +1,29 @@
 let host = "http://localhost:8880"
 
+let unitStruct: S.t<unit> =
+  S.unknown()->S.transformUnknown(~constructor=unknown => Obj.magic(unknown)->Ok, ())
+
+let apiCall = (
+  ~path,
+  ~method,
+  ~body: option<'body>=?,
+  ~bodyStruct: S.t<'body>,
+  ~dataStruct: S.t<'data>,
+): Promise.t<'data> => {
+  Undici.Request.call(
+    ~url=`${host}${path}`,
+    ~options={
+      method: method,
+      body: body->S.serializeWith(bodyStruct->S.json->Obj.magic)->Belt.Result.getExn->Obj.magic,
+    },
+    (),
+  )
+  ->Promise.then(response => response.body.json())
+  ->Promise.thenResolve(unknown => {
+    unknown->S.parseWith(dataStruct)->Belt.Result.getExn
+  })
+}
+
 module CreateGame = {
   type body = {userName: string}
   let bodyStruct = S.record1(
@@ -13,24 +37,7 @@ module CreateGame = {
     (),
   )
   let call: AppService.CreateGamePort.t = (~userName) => {
-    Undici.Request.call(
-      ~url=`${host}/game`,
-      ~options={
-        method: #POST,
-        body: {userName: userName}
-        ->S.serializeWith(bodyStruct->S.json)
-        ->Belt.Result.getExn
-        ->Obj.magic,
-      },
-      (),
-    )
-    ->Promise.then(response => response.body.json())
-    ->Promise.thenResolve(unknown => {
-      switch unknown->S.parseWith(dataStruct) {
-      | Ok(_) as ok => ok
-      | Error(message) => Js.Exn.raiseError(message)
-      }
-    })
+    apiCall(~path="/game", ~method=#POST, ~bodyStruct, ~dataStruct, ~body={userName: userName})
   }
 }
 
@@ -42,21 +49,13 @@ module JoinGame = {
     (),
   )
   let call: AppService.JoinGamePort.t = (~userName, ~gameCode) => {
-    Undici.Request.call(
-      ~url=`${host}/game/connection`,
-      ~options={
-        method: #POST,
-        body: {userName: userName, gameCode: gameCode}
-        ->S.serializeWith(bodyStruct->S.json)
-        ->Belt.Result.getExn
-        ->Obj.magic,
-      },
-      (),
+    apiCall(
+      ~path="/game/connection",
+      ~method=#POST,
+      ~bodyStruct,
+      ~dataStruct=unitStruct,
+      ~body={userName: userName, gameCode: gameCode},
     )
-    ->Promise.then(response => response.body.json())
-    ->Promise.thenResolve(_ => {
-      Ok()
-    })
   }
 }
 
@@ -106,7 +105,7 @@ module RequestGameStatus = {
     ~constructor=finishedContext => finishedContext->Ok,
     (),
   )
-  let statusStruct = S.unknown()->S.transformUnknown(~constructor=unknown =>
+  let dataStruct = S.unknown()->S.transformUnknown(~constructor=unknown =>
     unknown
     ->S.parseWith(backendStatusStruct)
     ->Belt.Result.flatMap(backendStatusType => {
@@ -124,23 +123,12 @@ module RequestGameStatus = {
   , ())
 
   let call: AppService.RequestGameStatusPort.t = (~userName, ~gameCode) => {
-    Undici.Request.call(
-      ~url=`${host}/status`,
-      ~options={
-        method: #GET,
-        body: {userName: userName, gameCode: gameCode}
-        ->S.serializeWith(bodyStruct->S.json)
-        ->Belt.Result.getExn
-        ->Obj.magic,
-      },
-      (),
+    apiCall(
+      ~path="/status",
+      ~method=#GET,
+      ~bodyStruct,
+      ~dataStruct,
+      ~body={userName: userName, gameCode: gameCode},
     )
-    ->Promise.then(response => response.body.json())
-    ->Promise.thenResolve(unknown => {
-      switch unknown->S.parseWith(statusStruct) {
-      | Ok(_) as ok => ok
-      | Error(message) => Js.Exn.raiseError(message)
-      }
-    })
   }
 }

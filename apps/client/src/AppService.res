@@ -1,10 +1,10 @@
 module JoinGamePort = {
-  type t = (~userName: string, ~gameCode: string) => Promise.t<result<unit, unit>>
+  type t = (~userName: string, ~gameCode: string) => Promise.t<unit>
 }
 
 module CreateGamePort = {
   type data = {gameCode: string}
-  type t = (~userName: string) => Promise.t<result<data, unit>>
+  type t = (~userName: string) => Promise.t<data>
 }
 
 module RequestGameStatusPort = {
@@ -12,7 +12,7 @@ module RequestGameStatusPort = {
     | WaitingForOpponentJoin
     | InProgress
     | Finished(Game.finishedContext)
-  type t = (~userName: string, ~gameCode: string) => Promise.t<result<data, unit>>
+  type t = (~userName: string, ~gameCode: string) => Promise.t<data>
 }
 
 module GameMachine = {
@@ -55,10 +55,8 @@ type state =
 type event =
   | CreateGame({userName: string})
   | OnCreateGameSuccess({gameCode: string})
-  | OnCreateGameFailure
   | JoinGame({userName: string, gameCode: string})
   | OnJoinGameSuccess
-  | OnJoinGameFailure
   | GameEvent(GameMachine.event)
 
 let machine = FSM.make(~reducer=(~state, ~event) => {
@@ -70,7 +68,6 @@ let machine = FSM.make(~reducer=(~state, ~event) => {
       userName: userName,
       gameState: GameMachine.machine->FSM.getInitialState,
     })
-  | (CreatingGame(_), OnCreateGameFailure) => Menu
   | (Menu, JoinGame({userName, gameCode})) => JoiningGame({userName: userName, gameCode: gameCode})
   | (JoiningGame({gameCode, userName}), OnJoinGameSuccess) =>
     Game({
@@ -78,7 +75,6 @@ let machine = FSM.make(~reducer=(~state, ~event) => {
       userName: userName,
       gameState: GameMachine.machine->FSM.getInitialState,
     })
-  | (JoiningGame(_), OnJoinGameFailure) => Menu
   | (Game(gameContext), GameEvent(gameEvent)) =>
     Game({
       ...gameContext,
@@ -101,30 +97,20 @@ let make = (
     switch state {
     | CreatingGame({userName}) =>
       createGame(~userName)
-      ->Promise.thenResolve(result => {
-        switch result {
-        | Ok({CreateGamePort.gameCode: gameCode}) =>
-          service->FSM.send(OnCreateGameSuccess({gameCode: gameCode}))
-        | Error() => service->FSM.send(OnCreateGameFailure)
-        }
+      ->Promise.thenResolve(({CreateGamePort.gameCode: gameCode}) => {
+        service->FSM.send(OnCreateGameSuccess({gameCode: gameCode}))
       })
       ->ignore
     | JoiningGame({userName, gameCode}) =>
       joinGame(~userName, ~gameCode)
-      ->Promise.thenResolve(result => {
-        switch result {
-        | Ok() => service->FSM.send(OnJoinGameSuccess)
-        | Error() => service->FSM.send(OnJoinGameFailure)
-        }
+      ->Promise.thenResolve(() => {
+        service->FSM.send(OnJoinGameSuccess)
       })
       ->ignore
     | Game({gameState: Loading, userName, gameCode}) =>
       requestGameStatus(~gameCode, ~userName)
-      ->Promise.thenResolve(result => {
-        switch result {
-        | Ok(data) => service->FSM.send(GameEvent(OnGameStatus(data)))
-        | Error() => Js.Exn.raiseError("Smth went wrong")
-        }
+      ->Promise.thenResolve(data => {
+        service->FSM.send(GameEvent(OnGameStatus(data)))
       })
       ->ignore
     | _ => ()

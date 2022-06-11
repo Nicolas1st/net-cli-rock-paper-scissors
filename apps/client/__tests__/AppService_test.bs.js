@@ -13,20 +13,14 @@ Ava("Works", (function (t) {
                       var service = AppService.make((function (userName) {
                               t.deepEqual(userName, "Dmitry", undefined);
                               return Promise.resolve({
-                                          TAG: /* Ok */0,
-                                          _0: {
-                                            gameCode: "1234"
-                                          }
+                                          gameCode: "1234"
                                         });
                             }), (function (param, param$1) {
                               return t.fail("Test CreateGameFlow");
                             }), (function (userName, gameCode) {
                               t.deepEqual(userName, "Dmitry", undefined);
                               t.deepEqual(gameCode, "1234", undefined);
-                              return Promise.resolve({
-                                          TAG: /* Ok */0,
-                                          _0: /* WaitingForOpponentJoin */0
-                                        });
+                              return Promise.resolve(/* WaitingForOpponentJoin */0);
                             }));
                       FSM.subscribe(service, (function (state) {
                               stepNumberRef.contents = stepNumberRef.contents + 1 | 0;

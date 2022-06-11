@@ -9,7 +9,7 @@ asyncTest("Works", t => {
     let service = AppService.make(
       ~createGame=(~userName) => {
         t->Assert.deepEqual(userName, "Dmitry", ())
-        Promise.resolve(Ok({AppService.CreateGamePort.gameCode: "1234"}))
+        Promise.resolve({AppService.CreateGamePort.gameCode: "1234"})
       },
       ~joinGame=(~userName as _, ~gameCode as _) => {
         t->Assert.fail("Test CreateGameFlow")
@@ -17,7 +17,7 @@ asyncTest("Works", t => {
       ~requestGameStatus=(~userName, ~gameCode) => {
         t->Assert.deepEqual(userName, "Dmitry", ())
         t->Assert.deepEqual(gameCode, "1234", ())
-        Promise.resolve(Ok(AppService.RequestGameStatusPort.WaitingForOpponentJoin))
+        Promise.resolve(AppService.RequestGameStatusPort.WaitingForOpponentJoin)
       },
     )
 

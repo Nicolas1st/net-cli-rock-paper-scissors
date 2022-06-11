@@ -2,11 +2,28 @@
 
 var S = require("rescript-struct/src/S.bs.js");
 var Curry = require("rescript/lib/js/curry.js");
-var Js_exn = require("rescript/lib/js/js_exn.js");
 var Undici = require("undici");
 var Belt_Result = require("rescript/lib/js/belt_Result.js");
 
 var host = "http://localhost:8880";
+
+var unitStruct = S.transformUnknown(S.unknown(undefined), (function (unknown) {
+        return {
+                TAG: /* Ok */0,
+                _0: unknown
+              };
+      }), undefined, undefined);
+
+function apiCall(path, method, body, bodyStruct, dataStruct) {
+  return Undici.request(host + path, {
+                  method: method,
+                  body: Belt_Result.getExn(S.serializeWith(body, undefined, S.json(bodyStruct)))
+                }).then(function (response) {
+                return Curry._1(response.body.json, undefined);
+              }).then(function (unknown) {
+              return Belt_Result.getExn(S.parseWith(unknown, undefined, dataStruct));
+            });
+}
 
 var bodyStruct = S.record1([
         "userName",
@@ -31,21 +48,9 @@ var dataStruct = S.record1([
       }), undefined, undefined);
 
 function call(userName) {
-  return Undici.request(host + "/game", {
-                  method: "POST",
-                  body: Belt_Result.getExn(S.serializeWith({
-                            userName: userName
-                          }, undefined, S.json(bodyStruct)))
-                }).then(function (response) {
-                return Curry._1(response.body.json, undefined);
-              }).then(function (unknown) {
-              var ok = S.parseWith(unknown, undefined, dataStruct);
-              if (ok.TAG === /* Ok */0) {
-                return ok;
-              } else {
-                return Js_exn.raiseError(ok._0);
-              }
-            });
+  return apiCall("/game", "POST", {
+              userName: userName
+            }, bodyStruct, dataStruct);
 }
 
 var CreateGame = {
@@ -74,20 +79,10 @@ var bodyStruct$1 = S.record2([
       }), undefined);
 
 function call$1(userName, gameCode) {
-  return Undici.request(host + "/game/connection", {
-                  method: "POST",
-                  body: Belt_Result.getExn(S.serializeWith({
-                            userName: userName,
-                            gameCode: gameCode
-                          }, undefined, S.json(bodyStruct$1)))
-                }).then(function (response) {
-                return Curry._1(response.body.json, undefined);
-              }).then(function (param) {
-              return {
-                      TAG: /* Ok */0,
-                      _0: undefined
-                    };
-            });
+  return apiCall("/game/connection", "POST", {
+              userName: userName,
+              gameCode: gameCode
+            }, bodyStruct$1, unitStruct);
 }
 
 var JoinGame = {
@@ -220,7 +215,7 @@ var gameResultStruct = S.record1([
               };
       }), undefined, undefined);
 
-var statusStruct = S.transformUnknown(S.unknown(undefined), (function (unknown) {
+var dataStruct$1 = S.transformUnknown(S.unknown(undefined), (function (unknown) {
         return Belt_Result.flatMap(S.parseWith(unknown, undefined, backendStatusStruct), (function (backendStatusType) {
                       if (backendStatusType === "inProccess") {
                         return {
@@ -243,22 +238,10 @@ var statusStruct = S.transformUnknown(S.unknown(undefined), (function (unknown) 
       }), undefined, undefined);
 
 function call$2(userName, gameCode) {
-  return Undici.request(host + "/status", {
-                  method: "GET",
-                  body: Belt_Result.getExn(S.serializeWith({
-                            userName: userName,
-                            gameCode: gameCode
-                          }, undefined, S.json(bodyStruct$2)))
-                }).then(function (response) {
-                return Curry._1(response.body.json, undefined);
-              }).then(function (unknown) {
-              var ok = S.parseWith(unknown, undefined, statusStruct);
-              if (ok.TAG === /* Ok */0) {
-                return ok;
-              } else {
-                return Js_exn.raiseError(ok._0);
-              }
-            });
+  return apiCall("/status", "GET", {
+              userName: userName,
+              gameCode: gameCode
+            }, bodyStruct$2, dataStruct$1);
 }
 
 var RequestGameStatus = {
@@ -268,12 +251,14 @@ var RequestGameStatus = {
   outcomeStruct: outcomeStruct,
   finishedContextStruct: finishedContextStruct,
   gameResultStruct: gameResultStruct,
-  statusStruct: statusStruct,
+  dataStruct: dataStruct$1,
   call: call$2
 };
 
 exports.host = host;
+exports.unitStruct = unitStruct;
+exports.apiCall = apiCall;
 exports.CreateGame = CreateGame;
 exports.JoinGame = JoinGame;
 exports.RequestGameStatus = RequestGameStatus;
-/* bodyStruct Not a pure module */
+/* unitStruct Not a pure module */
