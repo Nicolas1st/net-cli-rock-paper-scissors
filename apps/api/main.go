@@ -27,7 +27,7 @@ func main() {
 	m.HandleFunc("/game", checkForMethod(gameController.CreateGame, http.MethodPost))
 	m.HandleFunc("/game/connection", checkForMethod(gameController.JoinGame, http.MethodPost))
 	m.HandleFunc("/game/move", checkForMethod(gameController.MakeMove, http.MethodPost))
-	m.HandleFunc("/game", checkForMethod(gameController.GetStatus, http.MethodGet))
+	m.HandleFunc("/game/status", checkForMethod(gameController.GetStatus, http.MethodGet))
 
 	s := http.Server{
 		Addr:         ":8880",
