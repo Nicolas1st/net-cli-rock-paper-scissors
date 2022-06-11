@@ -98,7 +98,14 @@ function renderer(appState) {
         if (match) {
           var match$1 = match._0;
           if (typeof match$1 === "number") {
-            if (match$1 !== /* WaitingForOpponentJoin */0) {
+            if (match$1 === /* WaitingForOpponentJoin */0) {
+              var gameCode = appState.gameCode;
+              UI.message(UI.MultilineText.make([
+                        "Waiting when an opponent join the game...",
+                        "Game code: \"" + gameCode + "\""
+                      ]));
+              return Promise.resolve(undefined);
+            } else {
               return UI.List.prompt("What's your move?", Game.Move.values.map(function (move) {
                                 return Curry._2(UI.List.Choice.make, moveToText(move), move);
                               })).then(function (answer) {
@@ -111,42 +118,39 @@ function renderer(appState) {
                                 };
                         });
             }
-            UI.message("Waiting when an opponent join the game...");
-            return Promise.resolve(undefined);
-          } else {
-            if (match$1.TAG === /* WaitingForOpponentMove */0) {
-              var yourMove = match$1.yourMove;
-              UI.message(UI.MultilineText.make([
-                        "Waiting for the opponent move...",
-                        "Your move: " + moveToText(yourMove)
-                      ]));
-              return Promise.resolve(undefined);
-            }
-            var match$2 = match$1._0;
-            var outcome = match$2.outcome;
-            var yourMove$1 = match$2.yourMove;
-            var opponentsMove = match$2.opponentsMove;
-            var outcomeText;
-            switch (outcome) {
-              case /* Draw */0 :
-                  outcomeText = "Draw 🤝";
-                  break;
-              case /* Win */1 :
-                  outcomeText = "You won 🏆";
-                  break;
-              case /* Loss */2 :
-                  outcomeText = "You lost 🪦";
-                  break;
-              
-            }
+          }
+          if (match$1.TAG === /* WaitingForOpponentMove */0) {
+            var yourMove = match$1.yourMove;
             UI.message(UI.MultilineText.make([
-                      "Game finished!",
-                      "Outcome: " + outcomeText,
-                      "Your move: " + moveToText(yourMove$1),
-                      "Opponent's move: " + moveToText(opponentsMove)
+                      "Waiting for the opponent move...",
+                      "Your move: " + moveToText(yourMove)
                     ]));
             return Promise.resolve(undefined);
           }
+          var match$2 = match$1._0;
+          var outcome = match$2.outcome;
+          var yourMove$1 = match$2.yourMove;
+          var opponentsMove = match$2.opponentsMove;
+          var outcomeText;
+          switch (outcome) {
+            case /* Draw */0 :
+                outcomeText = "Draw 🤝";
+                break;
+            case /* Win */1 :
+                outcomeText = "You won 🏆";
+                break;
+            case /* Loss */2 :
+                outcomeText = "You lost 🪦";
+                break;
+            
+          }
+          UI.message(UI.MultilineText.make([
+                    "Game finished!",
+                    "Outcome: " + outcomeText,
+                    "Your move: " + moveToText(yourMove$1),
+                    "Opponent's move: " + moveToText(opponentsMove)
+                  ]));
+          return Promise.resolve(undefined);
         } else {
           UI.message("Loading game...");
           return Promise.resolve(undefined);
