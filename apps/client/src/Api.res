@@ -1,5 +1,3 @@
-let host = "http://localhost:8880"
-
 let unwrapResult = result => {
   switch result {
   | Ok(value) => value
@@ -28,7 +26,7 @@ let apiCall = (
     method: method,
     body: body->S.serializeWith(bodyStruct->S.json->Obj.magic)->unwrapResult->Obj.magic,
   }
-  Undici.Request.call(~url=`${host}${path}`, ~options, ())
+  Undici.Request.call(~url=`${Env.apiHost}${path}`, ~options, ())
   ->Promise.then(response => {
     if response.statusCode === 204 {
       Promise.resolve(%raw(`undefined`))

@@ -1,13 +1,12 @@
 'use strict';
 
 var S = require("rescript-struct/src/S.bs.js");
+var Env = require("./Env.bs.js");
 var Js_exn = require("rescript/lib/js/js_exn.js");
 var Undici = require("undici");
 var Belt_Int = require("rescript/lib/js/belt_Int.js");
 var Belt_Option = require("rescript/lib/js/belt_Option.js");
 var Belt_Result = require("rescript/lib/js/belt_Result.js");
-
-var host = "http://localhost:8880";
 
 function unwrapResult(result) {
   if (result.TAG === /* Ok */0) {
@@ -42,7 +41,7 @@ function apiCall(path, method, body, bodyStruct, dataStruct) {
     method: method,
     body: options_body
   };
-  return Undici.request(host + path, options).then(function (response) {
+  return Undici.request(Env.apiHost + path, options).then(function (response) {
                 if (response.statusCode === 204) {
                   return Promise.resolve(undefined);
                 } else {
@@ -343,7 +342,6 @@ var SendMove = {
   call: call$3
 };
 
-exports.host = host;
 exports.unwrapResult = unwrapResult;
 exports.unitStruct = unitStruct;
 exports.gameCodeStruct = gameCodeStruct;
