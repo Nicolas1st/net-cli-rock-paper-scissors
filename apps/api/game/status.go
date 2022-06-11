@@ -4,6 +4,6 @@ type GameStatus string
 
 const (
 	Waiting   GameStatus = "waiting"
-	InProcess GameStatus = "in process"
+	InProcess GameStatus = "inProcess"
 	Finished  GameStatus = "finished"
 )
