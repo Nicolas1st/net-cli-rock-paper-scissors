@@ -137,8 +137,17 @@ var GameStatusWaitingForOpponentMoveRenderer = {
 };
 
 function make$6(param) {
-  UI.message("Ready to play! TODO: add moves");
-  return Promise.resolve(undefined);
+  return UI.List.prompt("What's your move?", Game.Move.values.map(function (move) {
+                    return Curry._2(UI.List.Choice.make, moveToText(move), move);
+                  })).then(function (answer) {
+              return {
+                      TAG: /* GameEvent */3,
+                      _0: {
+                        TAG: /* SendMove */1,
+                        _0: answer
+                      }
+                    };
+            });
 }
 
 var GameStatusReadyToPlayRenderer = {
@@ -192,11 +201,10 @@ function renderer(appState) {
         if (match) {
           var match$1 = match._0;
           if (typeof match$1 === "number") {
-            if (match$1 === /* WaitingForOpponentJoin */0) {
-              UI.message("Waiting when an opponent join the game...");
-              return Promise.resolve(undefined);
+            if (match$1 !== /* WaitingForOpponentJoin */0) {
+              return make$6(undefined);
             }
-            UI.message("Ready to play! TODO: add moves");
+            UI.message("Waiting when an opponent join the game...");
             return Promise.resolve(undefined);
           } else {
             if (match$1.TAG === /* WaitingForOpponentMove */0) {

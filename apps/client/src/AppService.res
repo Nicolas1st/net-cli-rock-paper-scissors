@@ -8,7 +8,7 @@ module CreateGamePort = {
 }
 
 module SendMovePort = {
-  type t = (~userName: string, ~gameCode: string, ~move: Game.move) => Promise.t<unit>
+  type t = (~userName: string, ~gameCode: string, ~move: Game.Move.t) => Promise.t<unit>
 }
 
 module RequestGameStatusPort = {
@@ -23,7 +23,7 @@ module GameMachine = {
   type state =
     | Loading
     | Status(Game.status)
-  type event = OnGameStatus(RequestGameStatusPort.data) | SendMove(Game.move)
+  type event = OnGameStatus(RequestGameStatusPort.data) | SendMove(Game.Move.t)
 
   let remoteGameStatusToLocal = (remoteGameStatus: RequestGameStatusPort.data): Game.status =>
     switch remoteGameStatus {

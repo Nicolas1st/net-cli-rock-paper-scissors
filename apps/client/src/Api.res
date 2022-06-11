@@ -27,7 +27,7 @@ let apiCall = (
 let moveStruct = S.string()->S.transform(
   ~constructor=data => {
     switch data {
-    | "rock" => Game.Rock->Ok
+    | "rock" => Game.Move.Rock->Ok
     | "paper" => Paper->Ok
     | "scissors" => Scissors->Ok
     | unknownData => Error(`The provided move "${unknownData}" is unknown`)
@@ -145,7 +145,7 @@ module RequestGameStatus = {
 }
 
 module SendMove = {
-  type body = {userName: string, gameCode: string, move: Game.move}
+  type body = {userName: string, gameCode: string, move: Game.Move.t}
   let bodyStruct = S.record3(
     ~fields=(("userName", S.string()), ("gameCode", S.string()), ("move", moveStruct)),
     ~destructor=({userName, gameCode, move}) => (userName, gameCode, move)->Ok,

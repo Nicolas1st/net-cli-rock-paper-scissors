@@ -1,4 +1,4 @@
-let moveToText = (move: Game.move) =>
+let moveToText = (move: Game.Move.t) =>
   switch move {
   | Rock => `Rock 🪨`
   | Scissors => `Scissors ✂️`
@@ -94,7 +94,7 @@ module GameStatusWaitingForOpponentJoinRenderer = {
 }
 
 module GameStatusWaitingForOpponentMoveRenderer = {
-  let make = (~yourMove: Game.move) => {
+  let make = (~yourMove: Game.Move.t) => {
     UI.message(
       [
         "Waiting for the opponent move...",
@@ -106,10 +106,17 @@ module GameStatusWaitingForOpponentMoveRenderer = {
 }
 
 module GameStatusReadyToPlayRenderer = {
-  let make = () => {
-    UI.message("Ready to play! TODO: add moves")
-    Promise.resolve(None)
-  }
+  open UI.List
+
+  let make = () =>
+    prompt(
+      ~message="What's your move?",
+      ~choices=Game.Move.values->Js.Array2.map(move =>
+        Choice.make(~name=move->moveToText, ~value=move)
+      ),
+    )->Promise.thenResolve(answer => {
+      Some(AppService.GameEvent(AppService.GameMachine.SendMove(answer)))
+    })
 }
 
 module GameStatusFinishedRenderer = {

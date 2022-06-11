@@ -1,10 +1,15 @@
+module Move = {
+  type t = Rock | Scissors | Paper
+
+  let values = [Rock, Scissors, Paper]
+}
+
 type outcome = Draw | Win | Loss
-type move = Rock | Scissors | Paper
-type finishedContext = {outcome: outcome, yourMove: move, opponentsMove: move}
+type finishedContext = {outcome: outcome, yourMove: Move.t, opponentsMove: Move.t}
 type status =
   | WaitingForOpponentJoin
   | ReadyToPlay
-  | WaitingForOpponentMove({yourMove: move})
+  | WaitingForOpponentMove({yourMove: Move.t})
   | Finished(finishedContext)
 
 module Code = {
