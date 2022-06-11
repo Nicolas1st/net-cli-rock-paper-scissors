@@ -1,7 +1,7 @@
 open Ava
 
 asyncTest("Works", t => {
-  t->Ava.ExecutionContext.plan(7)
+  t->Ava.ExecutionContext.plan(8)
 
   let stepNumberRef = ref(1)
 
@@ -17,7 +17,7 @@ asyncTest("Works", t => {
       ~requestGameStatus=(~userName, ~gameCode) => {
         t->Assert.deepEqual(userName, "Dmitry", ())
         t->Assert.deepEqual(gameCode, "1234", ())
-        Promise.resolve(Ok())
+        Promise.resolve(Ok(Game.WaitingForPlayer))
       },
     )
 
@@ -28,8 +28,9 @@ asyncTest("Works", t => {
           t->Assert.deepEqual(state, AppService.CreatingGame({userName: "Dmitry"}), ())
           t->Assert.is(stepNumberRef.contents, 2, ())
         }
-      | Game({gameState: Loading}) => {
-          t->Assert.is(stepNumberRef.contents, 3, ())
+      | Game({gameState: Loading}) => t->Assert.is(stepNumberRef.contents, 3, ())
+      | Game({gameState: Status(WaitingForPlayer)}) => {
+          t->Assert.is(stepNumberRef.contents, 4, ())
           resolve(. Obj.magic(""))
         }
       | _ => ()

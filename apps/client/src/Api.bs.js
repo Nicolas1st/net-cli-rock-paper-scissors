@@ -126,7 +126,7 @@ function call$2(userName, gameCode) {
               }).then(function (param) {
               return {
                       TAG: /* Ok */0,
-                      _0: undefined
+                      _0: /* WaitingForPlayer */0
                     };
             });
 }

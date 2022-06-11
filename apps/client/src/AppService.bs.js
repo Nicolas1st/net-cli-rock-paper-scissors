@@ -3,6 +3,7 @@
 var FSM = require("./utils/FSM.bs.js");
 var Curry = require("rescript/lib/js/curry.js");
 var Js_exn = require("rescript/lib/js/js_exn.js");
+var Caml_obj = require("rescript/lib/js/caml_obj.js");
 
 var JoinGamePort = {};
 
@@ -11,10 +12,18 @@ var CreateGamePort = {};
 var RequestGameStatusPort = {};
 
 var machine = FSM.make((function (state, $$event) {
-        if (state !== 3 || !$$event) {
-          return state;
+        if (!state) {
+          return /* Status */{
+                  _0: $$event._0
+                };
+        }
+        var status = $$event._0;
+        if (Caml_obj.caml_notequal(state._0, status)) {
+          return /* Status */{
+                  _0: status
+                };
         } else {
-          return /* SendingPlay */4;
+          return state;
         }
       }), /* Loading */0);
 
@@ -80,7 +89,16 @@ var machine$1 = FSM.make((function (state, $$event) {
                   
                 }
             case /* Game */2 :
-                return state;
+                if (typeof $$event === "number" || $$event.TAG !== /* GameEvent */3) {
+                  return state;
+                } else {
+                  return {
+                          TAG: /* Game */2,
+                          userName: state.userName,
+                          gameCode: state.gameCode,
+                          gameState: FSM.transition(machine, state.gameState, $$event._0)
+                        };
+                }
             
           }
         }
@@ -115,12 +133,17 @@ function make(createGame, joinGame, requestGameStatus) {
                     });
                 return ;
             case /* Game */2 :
-                if (state.gameState !== 0) {
+                if (state.gameState) {
                   return ;
                 } else {
                   Curry._2(requestGameStatus, state.userName, state.gameCode).then(function (result) {
                         if (result.TAG === /* Ok */0) {
-                          return ;
+                          return FSM.send(service, {
+                                      TAG: /* GameEvent */3,
+                                      _0: /* OnGameStatus */{
+                                        _0: result._0
+                                      }
+                                    });
                         } else {
                           return Js_exn.raiseError("Smth went wrong");
                         }

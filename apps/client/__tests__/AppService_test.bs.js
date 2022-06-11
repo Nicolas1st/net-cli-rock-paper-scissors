@@ -5,7 +5,7 @@ var Ava = require("ava").default;
 var AppService = require("../src/AppService.bs.js");
 
 Ava("Works", (function (t) {
-        t.plan(7);
+        t.plan(8);
         var stepNumberRef = {
           contents: 1
         };
@@ -25,7 +25,7 @@ Ava("Works", (function (t) {
                               t.deepEqual(gameCode, "1234", undefined);
                               return Promise.resolve({
                                           TAG: /* Ok */0,
-                                          _0: undefined
+                                          _0: /* WaitingForPlayer */0
                                         });
                             }));
                       FSM.subscribe(service, (function (state) {
@@ -44,11 +44,17 @@ Ava("Works", (function (t) {
                                 case /* JoiningGame */1 :
                                     return ;
                                 case /* Game */2 :
-                                    if (state.gameState !== 0) {
-                                      return ;
+                                    var match = state.gameState;
+                                    if (match) {
+                                      if (match._0 === 0) {
+                                        t.is(stepNumberRef.contents, 4, undefined);
+                                        return resolve("");
+                                      } else {
+                                        return ;
+                                      }
                                     } else {
                                       t.is(stepNumberRef.contents, 3, undefined);
-                                      return resolve("");
+                                      return ;
                                     }
                                 
                               }

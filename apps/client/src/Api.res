@@ -67,7 +67,7 @@ module RequestGameStatus = {
     ~destructor=({userName, gameCode}) => (userName, gameCode)->Ok,
     (),
   )
-  let call: AppService.JoinGamePort.t = (~userName, ~gameCode) => {
+  let call: AppService.RequestGameStatusPort.t = (~userName, ~gameCode) => {
     Undici.Request.call(
       ~url=`${host}/status`,
       ~options={
@@ -81,7 +81,7 @@ module RequestGameStatus = {
     )
     ->Promise.then(response => response.body.json())
     ->Promise.thenResolve(_ => {
-      Ok()
+      Ok(Game.WaitingForPlayer)
     })
   }
 }
