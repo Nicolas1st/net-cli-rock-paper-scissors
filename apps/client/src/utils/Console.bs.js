@@ -2,6 +2,12 @@
 
 var Inquirer = require("inquirer");
 
+function message(string) {
+  console.clear();
+  console.log(string);
+  
+}
+
 var _promptName = "promptName";
 
 var Question = {};
@@ -51,6 +57,7 @@ var List = {
   prompt: prompt$1
 };
 
+exports.message = message;
 exports._promptName = _promptName;
 exports.Confirm = Confirm;
 exports.List = List;

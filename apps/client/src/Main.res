@@ -1,5 +1,5 @@
 module ManuRenderer = {
-  open Inquirer.List
+  open Console.List
 
   type choice = [#createGame | #joinGame | #exit]
 
@@ -16,17 +16,24 @@ module ManuRenderer = {
       | #createGame => AppService.CreateGame({userName: "Hardcoded"})
       | #joinGame => AppService.JoinGame({userName: "Hardcoded", gameCode: "Hardcoded"})
       | #exit => Js.Exn.raiseError("TODO: exit 0")
-      }
+      }->Some
     })
+}
+
+module CreatingGameRenderer = {
+  let make = () => {
+    Console.message("Creating game...")
+    Promise.resolve(None)
+  }
 }
 
 let rec renderer = (appState: AppService.state) => {
   switch appState {
   | Menu => ManuRenderer.make()
-
+  | CreatingGame(_) => CreatingGameRenderer.make()
   | _ =>
-    Inquirer.Confirm.prompt(
-      ~message="Unknown state, do you want to exit?",
+    Console.Confirm.prompt(
+      ~message=`Unknown state, do you want to exit? (${appState->Js.Json.serializeExn})`,
     )->Promise.then(answer => {
       if answer {
         Js.Exn.raiseError("TODO: exit 0")
@@ -43,7 +50,10 @@ let run = () => {
     ~joinGame=Api.JoinGame.call,
     ~requestGameStatus=Api.RequestGameStatus.call,
   )
-  let render = state' => renderer(state')->Promise.thenResolve(service->FSM.send)->ignore
+  let render = state' =>
+    renderer(state')
+    ->Promise.thenResolve(answer => answer->Belt.Option.map(service->FSM.send))
+    ->ignore
   let _ = service->FSM.subscribe(state => {
     render(state)
   })

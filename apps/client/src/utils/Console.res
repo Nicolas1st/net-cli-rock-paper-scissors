@@ -1,6 +1,13 @@
+@val external _clear: unit => unit = "console.clear"
+
+let message = string => {
+  _clear()
+  Js.log(string)
+}
+
 let _promptName = "promptName"
 
-type questionType = [
+type _questionType = [
   | #input
   | #number
   | #confirm
@@ -16,7 +23,7 @@ module Confirm = {
   module Question = {
     type t = {
       @as("type")
-      questionType: questionType,
+      questionType: _questionType,
       name: string,
       message: string,
     }
@@ -53,7 +60,7 @@ module List = {
   module Question = {
     type t<'value> = {
       @as("type")
-      questionType: questionType,
+      questionType: _questionType,
       name: string,
       message: string,
       choices: array<Choice.t<'value>>,
