@@ -5,7 +5,7 @@ var FSM = require("./utils/FSM.bs.js");
 var AppService = require("./AppService.bs.js");
 
 function run(param) {
-  var service = AppService.make(Api.CreateGame.call, Api.JoinGame.call);
+  var service = AppService.make(Api.CreateGame.call, Api.JoinGame.call, Api.RequestGameStatus.call);
   FSM.subscribe(service, (function (state) {
           var messge;
           if (typeof state === "number") {
@@ -19,8 +19,7 @@ function run(param) {
                   messge = "JoiningGame {userName: \"" + state.userName + "\", gameCode: \"" + state.gameCode + "\"}";
                   break;
               case /* Game */2 :
-                  var gameState = FSM.getCurrentState(state._0);
-                  messge = "Game {userName: \"" + gameState.userName + "\", gameCode: \"" + gameState.gameCode + "\"}";
+                  messge = "Game TODO: {userName: \"" + state.userName + "\", gameCode: \"" + state.gameCode + "\"}";
                   break;
               
             }

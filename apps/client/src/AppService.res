@@ -1,40 +1,74 @@
-module Port = {
-  module JoinGame = {
-    type t = (~userName: string, ~gameCode: string) => Promise.t<result<unit, unit>>
-  }
+module JoinGamePort = {
+  type t = (~userName: string, ~gameCode: string) => Promise.t<result<unit, unit>>
+}
 
-  module CreateGame = {
-    type data = {gameCode: string}
-    type t = (~userName: string) => Promise.t<result<data, unit>>
-  }
+module CreateGamePort = {
+  type data = {gameCode: string}
+  type t = (~userName: string) => Promise.t<result<data, unit>>
+}
+
+module RequestGameStatusPort = {
+  type t = (~userName: string, ~gameCode: string) => Promise.t<result<unit, unit>>
+}
+
+module GameMachine = {
+  type state =
+    | Loading
+    | WaitingForPlayer
+    | Finished
+    | ReadyToPlay
+    | SendingPlay
+    | WaitingForOpponentPlay
+  type event = Start | Play
+
+  let machine = FSM.make(~reducer=(~state, ~event) => {
+    switch (state, event) {
+    | (ReadyToPlay, Play) => SendingPlay
+    | (_, _) => state
+    }
+  }, ~initialState=Loading)
 }
 
 type state =
   | Menu
   | CreatingGame({userName: string})
   | JoiningGame({userName: string, gameCode: string})
-  | Game(GameService.t)
+  | Game({userName: string, gameCode: string, gameState: GameMachine.state})
 type event =
   | CreateGame({userName: string})
-  | OnCreateGameSuccess(GameService.t)
+  | OnCreateGameSuccess({gameCode: string})
   | OnCreateGameFailure
   | JoinGame({userName: string, gameCode: string})
-  | OnJoinGameSuccess(GameService.t)
+  | OnJoinGameSuccess
   | OnJoinGameFailure
 
 let machine = FSM.make(~reducer=(~state, ~event) => {
   switch (state, event) {
   | (Menu, CreateGame({userName})) => CreatingGame({userName: userName})
-  | (CreatingGame(_), OnCreateGameSuccess(gameService)) => Game(gameService)
+  | (CreatingGame({userName}), OnCreateGameSuccess({gameCode})) =>
+    Game({
+      gameCode: gameCode,
+      userName: userName,
+      gameState: GameMachine.machine->FSM.getInitialState,
+    })
   | (CreatingGame(_), OnCreateGameFailure) => Menu
   | (Menu, JoinGame({userName, gameCode})) => JoiningGame({userName: userName, gameCode: gameCode})
-  | (JoiningGame(_), OnJoinGameSuccess(gameService)) => Game(gameService)
+  | (JoiningGame({gameCode, userName}), OnJoinGameSuccess) =>
+    Game({
+      gameCode: gameCode,
+      userName: userName,
+      gameState: GameMachine.machine->FSM.getInitialState,
+    })
   | (JoiningGame(_), OnJoinGameFailure) => Menu
   | (_, _) => state
   }
 }, ~initialState=Menu)
 
-let make = (~createGame: Port.CreateGame.t, ~joinGame: Port.JoinGame.t) => {
+let make = (
+  ~createGame: CreateGamePort.t,
+  ~joinGame: JoinGamePort.t,
+  ~requestGameStatus: RequestGameStatusPort.t,
+) => {
   let service = machine->FSM.interpret
   let _ = service->FSM.subscribe(state => {
     switch state {
@@ -42,8 +76,8 @@ let make = (~createGame: Port.CreateGame.t, ~joinGame: Port.JoinGame.t) => {
       createGame(~userName)
       ->Promise.thenResolve(result => {
         switch result {
-        | Ok({Port.CreateGame.gameCode: gameCode}) =>
-          service->FSM.send(OnCreateGameSuccess(GameService.make(~gameCode, ~userName)))
+        | Ok({CreateGamePort.gameCode: gameCode}) =>
+          service->FSM.send(OnCreateGameSuccess({gameCode: gameCode}))
         | Error() => service->FSM.send(OnCreateGameFailure)
         }
       })
@@ -52,8 +86,17 @@ let make = (~createGame: Port.CreateGame.t, ~joinGame: Port.JoinGame.t) => {
       joinGame(~userName, ~gameCode)
       ->Promise.thenResolve(result => {
         switch result {
-        | Ok() => service->FSM.send(OnJoinGameSuccess(GameService.make(~gameCode, ~userName)))
+        | Ok() => service->FSM.send(OnJoinGameSuccess)
         | Error() => service->FSM.send(OnJoinGameFailure)
+        }
+      })
+      ->ignore
+    | Game({gameState: Loading, userName, gameCode}) =>
+      requestGameStatus(~gameCode, ~userName)
+      ->Promise.thenResolve(result => {
+        switch result {
+        | Ok() => () //service->FSM.send(WaitingForPlayer)
+        | Error() => Js.Exn.raiseError("Smth went wrong")
         }
       })
       ->ignore

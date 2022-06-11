@@ -9,10 +9,10 @@ module CreateGame = {
   )
   let dataStruct = S.record1(
     ~fields=("gameCode", S.string()),
-    ~constructor=gameCode => {AppService.Port.CreateGame.gameCode: gameCode}->Ok,
+    ~constructor=gameCode => {AppService.CreateGamePort.gameCode: gameCode}->Ok,
     (),
   )
-  let call: AppService.Port.CreateGame.t = (~userName) => {
+  let call: AppService.CreateGamePort.t = (~userName) => {
     Undici.Request.call(
       ~url=`${host}/game`,
       ~options={
@@ -41,11 +41,37 @@ module JoinGame = {
     ~destructor=({userName, gameCode}) => (userName, gameCode)->Ok,
     (),
   )
-  let call: AppService.Port.JoinGame.t = (~userName, ~gameCode) => {
+  let call: AppService.JoinGamePort.t = (~userName, ~gameCode) => {
     Undici.Request.call(
-      ~url=`${host}/game`,
+      ~url=`${host}/game/connection`,
       ~options={
         method: #POST,
+        body: {userName: userName, gameCode: gameCode}
+        ->S.serializeWith(bodyStruct->S.json)
+        ->Belt.Result.getExn
+        ->Obj.magic,
+      },
+      (),
+    )
+    ->Promise.then(response => response.body.json())
+    ->Promise.thenResolve(_ => {
+      Ok()
+    })
+  }
+}
+
+module RequestGameStatus = {
+  type body = {userName: string, gameCode: string}
+  let bodyStruct = S.record2(
+    ~fields=(("userName", S.string()), ("gameCode", S.string())),
+    ~destructor=({userName, gameCode}) => (userName, gameCode)->Ok,
+    (),
+  )
+  let call: AppService.JoinGamePort.t = (~userName, ~gameCode) => {
+    Undici.Request.call(
+      ~url=`${host}/status`,
+      ~options={
+        method: #GET,
         body: {userName: userName, gameCode: gameCode}
         ->S.serializeWith(bodyStruct->S.json)
         ->Belt.Result.getExn

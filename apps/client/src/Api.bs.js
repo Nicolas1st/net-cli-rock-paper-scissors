@@ -74,7 +74,7 @@ var bodyStruct$1 = S.record2([
       }), undefined);
 
 function call$1(userName, gameCode) {
-  return Undici.request(host + "/game", {
+  return Undici.request(host + "/game/connection", {
                   method: "POST",
                   body: Belt_Result.getExn(S.serializeWith({
                             userName: userName,
@@ -95,7 +95,49 @@ var JoinGame = {
   call: call$1
 };
 
+var bodyStruct$2 = S.record2([
+      [
+        "userName",
+        S.string(undefined)
+      ],
+      [
+        "gameCode",
+        S.string(undefined)
+      ]
+    ], undefined, (function (param) {
+        return {
+                TAG: /* Ok */0,
+                _0: [
+                  param.userName,
+                  param.gameCode
+                ]
+              };
+      }), undefined);
+
+function call$2(userName, gameCode) {
+  return Undici.request(host + "/status", {
+                  method: "GET",
+                  body: Belt_Result.getExn(S.serializeWith({
+                            userName: userName,
+                            gameCode: gameCode
+                          }, undefined, S.json(bodyStruct$2)))
+                }).then(function (response) {
+                return Curry._1(response.body.json, undefined);
+              }).then(function (param) {
+              return {
+                      TAG: /* Ok */0,
+                      _0: undefined
+                    };
+            });
+}
+
+var RequestGameStatus = {
+  bodyStruct: bodyStruct$2,
+  call: call$2
+};
+
 exports.host = host;
 exports.CreateGame = CreateGame;
 exports.JoinGame = JoinGame;
+exports.RequestGameStatus = RequestGameStatus;
 /* bodyStruct Not a pure module */

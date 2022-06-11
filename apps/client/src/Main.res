@@ -1,5 +1,9 @@
 let run = () => {
-  let service = AppService.make(~createGame=Api.CreateGame.call, ~joinGame=Api.JoinGame.call)
+  let service = AppService.make(
+    ~createGame=Api.CreateGame.call,
+    ~joinGame=Api.JoinGame.call,
+    ~requestGameStatus=Api.RequestGameStatus.call,
+  )
 
   let _ = service->FSM.subscribe(state => {
     let messge = switch state {
@@ -7,10 +11,8 @@ let run = () => {
     | CreatingGame({userName}) => `CreatingGame {userName: "${userName}"}`
     | JoiningGame({userName, gameCode}) =>
       `JoiningGame {userName: "${userName}", gameCode: "${gameCode}"}`
-    | Game(gameService) => {
-        let gameState = gameService->FSM.getCurrentState
-        `Game {userName: "${gameState.userName}", gameCode: "${gameState.gameCode}"}`
-      }
+    | Game({userName, gameCode}) => {
+      `Game TODO: {userName: "${userName}", gameCode: "${gameCode}"}`}
     }
     Js.log2("Enter new state", messge)
   })
