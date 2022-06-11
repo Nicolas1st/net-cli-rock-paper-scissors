@@ -5,6 +5,7 @@
   "scripts": {
     "res:build": "rescript build -with-deps",
     "res:dev": "rescript build -with-deps -w",
+    "start": "npm run res:build && node ./src/Main.bs.js",
     "test": "ava"
   },
   "ava": {
