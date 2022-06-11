@@ -34,8 +34,10 @@ let interpret = machine => {
 
 let send = (service, event) => {
   let newState = service.fsm->transition(~state=service.state, ~event)
-  service.state = newState
-  service.subscribtionSet->Set.forEach(fn => fn(newState))
+  if newState !== service.state {
+    service.state = newState
+    service.subscribtionSet->Set.forEach(fn => fn(newState))
+  }
 }
 
 let subscribe = (service, fn) => {

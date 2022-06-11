@@ -27,10 +27,13 @@ function interpret(machine) {
 
 function send(service, $$event) {
   var newState = Curry._2(service.fsm.reducer, service.state, $$event);
-  service.state = newState;
-  service.subscribtionSet.forEach(function (fn) {
-        return Curry._1(fn, newState);
-      });
+  if (newState !== service.state) {
+    service.state = newState;
+    service.subscribtionSet.forEach(function (fn) {
+          return Curry._1(fn, newState);
+        });
+    return ;
+  }
   
 }
 
