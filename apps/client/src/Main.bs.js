@@ -53,138 +53,35 @@ function promptGameCode(param) {
               }), undefined);
 }
 
-function make(param) {
-  return UI.List.prompt("Game menu", [
-                Curry._2(UI.List.Choice.make, "Create game", "createGame"),
-                Curry._2(UI.List.Choice.make, "Join game", "joinGame"),
-                Curry._2(UI.List.Choice.make, "Exit", "exit")
-              ]).then(function (answer) {
-              if (answer === "createGame") {
-                return promptUserName(undefined).then(function (userName) {
-                            return {
-                                    TAG: /* CreateGame */0,
-                                    userName: userName
-                                  };
-                          });
-              } else if (answer === "joinGame") {
-                return promptUserName(undefined).then(function (userName) {
-                            return promptGameCode(undefined).then(function (gameCode) {
-                                        return {
-                                                TAG: /* JoinGame */2,
-                                                userName: userName,
-                                                gameCode: gameCode
-                                              };
-                                      });
-                          });
-              } else {
-                return Promise.resolve(/* Exit */1);
-              }
-            });
-}
-
-var ManuRenderer = {
-  promptUserName: promptUserName,
-  promptGameCode: promptGameCode,
-  make: make
-};
-
-function make$1(param) {
-  UI.message("Creating game...");
-  return Promise.resolve(undefined);
-}
-
-var CreatingGameRenderer = {
-  make: make$1
-};
-
-function make$2(param) {
-  UI.message("Joining game...");
-  return Promise.resolve(undefined);
-}
-
-var JoiningGameRenderer = {
-  make: make$2
-};
-
-function make$3(param) {
-  UI.message("Loading game...");
-  return Promise.resolve(undefined);
-}
-
-var GameLoadingRenderer = {
-  make: make$3
-};
-
-function make$4(param) {
-  UI.message("Waiting when an opponent join the game...");
-  return Promise.resolve(undefined);
-}
-
-var GameStatusWaitingForOpponentJoinRenderer = {
-  make: make$4
-};
-
-function make$5(yourMove) {
-  UI.message(UI.MultilineText.make([
-            "Waiting for the opponent move...",
-            "Your move: " + moveToText(yourMove)
-          ]));
-  return Promise.resolve(undefined);
-}
-
-var GameStatusWaitingForOpponentMoveRenderer = {
-  make: make$5
-};
-
-function make$6(param) {
-  return UI.List.prompt("What's your move?", Game.Move.values.map(function (move) {
-                    return Curry._2(UI.List.Choice.make, moveToText(move), move);
-                  })).then(function (answer) {
-              return {
-                      TAG: /* GameEvent */3,
-                      _0: {
-                        TAG: /* SendMove */1,
-                        _0: answer
-                      }
-                    };
-            });
-}
-
-var GameStatusReadyToPlayRenderer = {
-  make: make$6
-};
-
-function make$7(outcome, yourMove, opponentsMove) {
-  var outcomeText;
-  switch (outcome) {
-    case /* Draw */0 :
-        outcomeText = "Draw 🤝";
-        break;
-    case /* Win */1 :
-        outcomeText = "You won 🏆";
-        break;
-    case /* Loss */2 :
-        outcomeText = "You lost 🪦";
-        break;
-    
-  }
-  UI.message(UI.MultilineText.make([
-            "Game finished!",
-            "Outcome: " + outcomeText,
-            "Your move: " + moveToText(yourMove),
-            "Opponent's move: " + moveToText(opponentsMove)
-          ]));
-  return Promise.resolve(undefined);
-}
-
-var GameStatusFinishedRenderer = {
-  make: make$7
-};
-
 function renderer(appState) {
   if (typeof appState === "number") {
     if (appState === /* Menu */0) {
-      return make(undefined);
+      return UI.List.prompt("Game menu", [
+                    Curry._2(UI.List.Choice.make, "Create game", "createGame"),
+                    Curry._2(UI.List.Choice.make, "Join game", "joinGame"),
+                    Curry._2(UI.List.Choice.make, "Exit", "exit")
+                  ]).then(function (answer) {
+                  if (answer === "createGame") {
+                    return promptUserName(undefined).then(function (userName) {
+                                return {
+                                        TAG: /* CreateGame */0,
+                                        userName: userName
+                                      };
+                              });
+                  } else if (answer === "joinGame") {
+                    return promptUserName(undefined).then(function (userName) {
+                                return promptGameCode(undefined).then(function (gameCode) {
+                                            return {
+                                                    TAG: /* JoinGame */2,
+                                                    userName: userName,
+                                                    gameCode: gameCode
+                                                  };
+                                          });
+                              });
+                  } else {
+                    return Promise.resolve(/* Exit */1);
+                  }
+                });
     } else {
       return (process.exit(0));
     }
@@ -201,18 +98,59 @@ function renderer(appState) {
         if (match) {
           var match$1 = match._0;
           if (typeof match$1 === "number") {
-            if (match$1 !== /* WaitingForOpponentJoin */0) {
-              return make$6(undefined);
+            if (match$1 === /* WaitingForOpponentJoin */0) {
+              var gameCode = appState.gameCode;
+              UI.message(UI.MultilineText.make([
+                        "Waiting when an opponent join the game...",
+                        "Game code: \"" + gameCode + "\""
+                      ]));
+              return Promise.resolve(undefined);
+            } else {
+              return UI.List.prompt("What's your move?", Game.Move.values.map(function (move) {
+                                return Curry._2(UI.List.Choice.make, moveToText(move), move);
+                              })).then(function (answer) {
+                          return {
+                                  TAG: /* GameEvent */3,
+                                  _0: {
+                                    TAG: /* SendMove */1,
+                                    _0: answer
+                                  }
+                                };
+                        });
             }
-            UI.message("Waiting when an opponent join the game...");
-            return Promise.resolve(undefined);
-          } else {
-            if (match$1.TAG === /* WaitingForOpponentMove */0) {
-              return make$5(match$1.yourMove);
-            }
-            var match$2 = match$1._0;
-            return make$7(match$2.outcome, match$2.yourMove, match$2.opponentsMove);
           }
+          if (match$1.TAG === /* WaitingForOpponentMove */0) {
+            var yourMove = match$1.yourMove;
+            UI.message(UI.MultilineText.make([
+                      "Waiting for the opponent move...",
+                      "Your move: " + moveToText(yourMove)
+                    ]));
+            return Promise.resolve(undefined);
+          }
+          var match$2 = match$1._0;
+          var outcome = match$2.outcome;
+          var yourMove$1 = match$2.yourMove;
+          var opponentsMove = match$2.opponentsMove;
+          var outcomeText;
+          switch (outcome) {
+            case /* Draw */0 :
+                outcomeText = "Draw 🤝";
+                break;
+            case /* Win */1 :
+                outcomeText = "You won 🏆";
+                break;
+            case /* Loss */2 :
+                outcomeText = "You lost 🪦";
+                break;
+            
+          }
+          UI.message(UI.MultilineText.make([
+                    "Game finished!",
+                    "Outcome: " + outcomeText,
+                    "Your move: " + moveToText(yourMove$1),
+                    "Opponent's move: " + moveToText(opponentsMove)
+                  ]));
+          return Promise.resolve(undefined);
         } else {
           UI.message("Loading game...");
           return Promise.resolve(undefined);
@@ -237,15 +175,4 @@ function run(param) {
 
 run(undefined);
 
-exports.moveToText = moveToText;
-exports.ManuRenderer = ManuRenderer;
-exports.CreatingGameRenderer = CreatingGameRenderer;
-exports.JoiningGameRenderer = JoiningGameRenderer;
-exports.GameLoadingRenderer = GameLoadingRenderer;
-exports.GameStatusWaitingForOpponentJoinRenderer = GameStatusWaitingForOpponentJoinRenderer;
-exports.GameStatusWaitingForOpponentMoveRenderer = GameStatusWaitingForOpponentMoveRenderer;
-exports.GameStatusReadyToPlayRenderer = GameStatusReadyToPlayRenderer;
-exports.GameStatusFinishedRenderer = GameStatusFinishedRenderer;
-exports.renderer = renderer;
-exports.run = run;
 /*  Not a pure module */

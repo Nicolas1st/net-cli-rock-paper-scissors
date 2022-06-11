@@ -36,8 +36,6 @@ module ManuRenderer = {
     )
   }
 
-  type choice = [#createGame | #joinGame | #exit]
-
   let make = () =>
     prompt(
       ~message="Game menu",
@@ -87,8 +85,13 @@ module GameLoadingRenderer = {
 }
 
 module GameStatusWaitingForOpponentJoinRenderer = {
-  let make = () => {
-    UI.message("Waiting when an opponent join the game...")
+  let make = (~gameCode) => {
+    UI.message(
+      [
+        "Waiting when an opponent join the game...",
+        `Game code: "${gameCode}"`,
+      ]->UI.MultilineText.make,
+    )
     Promise.resolve(None)
   }
 }
@@ -145,8 +148,8 @@ let renderer = (appState: AppService.state) => {
   | CreatingGame(_) => CreatingGameRenderer.make()
   | JoiningGame(_) => JoiningGameRenderer.make()
   | Game({gameState: Loading}) => GameLoadingRenderer.make()
-  | Game({gameState: Status(WaitingForOpponentJoin)}) =>
-    GameStatusWaitingForOpponentJoinRenderer.make()
+  | Game({gameState: Status(WaitingForOpponentJoin), gameCode}) =>
+    GameStatusWaitingForOpponentJoinRenderer.make(~gameCode)
   | Game({gameState: Status(ReadyToPlay)}) => GameStatusReadyToPlayRenderer.make()
   | Game({gameState: Status(WaitingForOpponentMove({yourMove}))}) =>
     GameStatusWaitingForOpponentMoveRenderer.make(~yourMove)
