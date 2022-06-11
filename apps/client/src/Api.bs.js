@@ -42,6 +42,28 @@ var CreateGame = {
   call: call
 };
 
+function call$1(userName, gameCode) {
+  return Undici.request(host + "/game", {
+                  method: "POST",
+                  body: {
+                    userName: userName,
+                    gameCode: gameCode
+                  }
+                }).then(function (response) {
+                return Curry._1(response.body.json, undefined);
+              }).then(function (param) {
+              return {
+                      TAG: /* Ok */0,
+                      _0: undefined
+                    };
+            });
+}
+
+var JoinGame = {
+  call: call$1
+};
+
 exports.host = host;
 exports.CreateGame = CreateGame;
+exports.JoinGame = JoinGame;
 /* dataStruct Not a pure module */
