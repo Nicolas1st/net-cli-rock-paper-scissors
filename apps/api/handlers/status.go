@@ -12,7 +12,11 @@ type GetGameStatusRequest struct {
 	UserName string `json:"userName"`
 }
 
-type GetGameStatusResponse struct {
+type GetGameNotFinishedStatusResponse struct {
+	Status game.GameStatus `json:"status"`
+}
+
+type GetGameFinishedStatusResponse struct {
 	Status     game.GameStatus `json:"status"`
 	GameResult game.Result     `json:"gameResult"`
 }
@@ -25,16 +29,22 @@ func (c *gameController) GetStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var resp GetGameStatusResponse
-
 	status, res, err := c.gameStorer.GetGameStatus(req.GameCode, req.UserName)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	resp.Status = status
-	resp.GameResult = res
+	if status == game.Finished {
+		var resp GetGameFinishedStatusResponse
+		resp.Status = status
+		resp.GameResult = res
 
-	json.NewEncoder(w).Encode(&resp)
+		json.NewEncoder(w).Encode(&resp)
+	} else {
+		var resp GetGameNotFinishedStatusResponse
+		resp.Status = status
+
+		json.NewEncoder(w).Encode(&resp)
+	}
 }
