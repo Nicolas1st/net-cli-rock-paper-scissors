@@ -136,7 +136,7 @@ module RequestGameStatus = {
   let call: AppService.RequestGameStatusPort.t = (~userName, ~gameCode) => {
     apiCall(
       ~path="/game/status",
-      ~method=#GET,
+      ~method=#POST,
       ~bodyStruct,
       ~dataStruct,
       ~body={userName: userName, gameCode: gameCode},

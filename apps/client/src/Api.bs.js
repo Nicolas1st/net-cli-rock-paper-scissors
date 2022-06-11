@@ -256,7 +256,7 @@ var dataStruct$1 = S.transformUnknown(S.unknown(undefined), (function (unknown) 
       }), undefined, undefined);
 
 function call$2(userName, gameCode) {
-  return apiCall("/game/status", "GET", {
+  return apiCall("/game/status", "POST", {
               userName: userName,
               gameCode: gameCode
             }, bodyStruct$2, dataStruct$1);
