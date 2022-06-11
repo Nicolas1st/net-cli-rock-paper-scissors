@@ -3,6 +3,7 @@ package game
 type Move string
 
 const (
+	Empty    Move = "empty"
 	Rock     Move = "rock"
 	Paper    Move = "paper"
 	Scissors Move = "scissors"
