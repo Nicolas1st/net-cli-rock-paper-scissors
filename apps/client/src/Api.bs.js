@@ -180,27 +180,27 @@ var bodyStruct$2 = S.record2([
               };
       }), undefined);
 
-var backendStatusStruct = S.record1([
-        "status",
-        S.transform(S.string(undefined), (function (value) {
-                if (value === "finished" || value === "waiting" || value === "inProcess") {
-                  return {
-                          TAG: /* Ok */0,
-                          _0: value
-                        };
-                } else {
-                  return {
-                          TAG: /* Error */1,
-                          _0: "The provided status type \"" + value + "\" is unknown"
-                        };
-                }
-              }), undefined, undefined)
-      ])((function (backendStatusType) {
-        return {
-                TAG: /* Ok */0,
-                _0: backendStatusType
-              };
-      }), undefined, undefined);
+var backendStatusStruct = S.Record.strip(S.record1([
+            "status",
+            S.transform(S.string(undefined), (function (value) {
+                    if (value === "finished" || value === "waiting" || value === "inProcess") {
+                      return {
+                              TAG: /* Ok */0,
+                              _0: value
+                            };
+                    } else {
+                      return {
+                              TAG: /* Error */1,
+                              _0: "The provided status type \"" + value + "\" is unknown"
+                            };
+                    }
+                  }), undefined, undefined)
+          ])((function (backendStatusType) {
+            return {
+                    TAG: /* Ok */0,
+                    _0: backendStatusType
+                  };
+          }), undefined, undefined));
 
 var outcomeStruct = S.transform(S.string(undefined), (function (value) {
         switch (value) {
@@ -251,13 +251,19 @@ var finishedContextStruct = S.record3([
               };
       }), undefined, undefined);
 
-var gameResultStruct = S.record1([
+var gameResultStruct = S.record2([
+      [
+        "status",
+        S.unknown(undefined)
+      ],
+      [
         "gameResult",
         finishedContextStruct
-      ])((function (finishedContext) {
+      ]
+    ], (function (param) {
         return {
                 TAG: /* Ok */0,
-                _0: finishedContext
+                _0: param[1]
               };
       }), undefined, undefined);
 

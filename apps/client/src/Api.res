@@ -103,17 +103,14 @@ module RequestGameStatus = {
     (),
   )
   type backendStatusType = [#waiting | #inProcess | #finished]
-  let backendStatusStruct = S.record1(
-    ~fields=("status", S.string()->S.transform(~constructor=value => {
-        switch Obj.magic(value) {
-        | #...backendStatusType as backendStatusType => backendStatusType->Ok
-        | unknownValue => Error(`The provided status type "${unknownValue->Obj.magic}" is unknown`)
-        }
-      }, ())),
-    ~constructor=backendStatusType => backendStatusType->Ok,
-    (),
-  )
-
+  let backendStatusStruct =
+    S.record1(~fields=("status", S.string()->S.transform(~constructor=value => {
+          switch Obj.magic(value) {
+          | #...backendStatusType as backendStatusType => backendStatusType->Ok
+          | unknownValue =>
+            Error(`The provided status type "${unknownValue->Obj.magic}" is unknown`)
+          }
+        }, ())), ~constructor=backendStatusType => backendStatusType->Ok, ())->S.Record.strip
   let outcomeStruct = S.string()->S.transform(~constructor=value => {
     switch value {
     | "win" => Game.Win->Ok
@@ -128,9 +125,9 @@ module RequestGameStatus = {
       {Game.outcome: outcome, yourMove: yourMove, opponentsMove: opponentsMove}->Ok,
     (),
   )
-  let gameResultStruct = S.record1(
-    ~fields=("gameResult", finishedContextStruct),
-    ~constructor=finishedContext => finishedContext->Ok,
+  let gameResultStruct = S.record2(
+    ~fields=(("status", S.unknown()), ("gameResult", finishedContextStruct)),
+    ~constructor=((_, finishedContext)) => finishedContext->Ok,
     (),
   )
   let dataStruct = S.unknown()->S.transformUnknown(~constructor=unknown =>
