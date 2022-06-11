@@ -3,13 +3,13 @@
 var FSM = require("./utils/FSM.bs.js");
 var Curry = require("rescript/lib/js/curry.js");
 
-var RequestJoinGame = {};
+var JoinGame = {};
 
-var RequestCreateGame = {};
+var CreateGame = {};
 
 var Port = {
-  RequestJoinGame: RequestJoinGame,
-  RequestCreateGame: RequestCreateGame
+  JoinGame: JoinGame,
+  CreateGame: CreateGame
 };
 
 var machine = FSM.make((function (state, $$event) {
@@ -74,7 +74,7 @@ var machine = FSM.make((function (state, $$event) {
         }
       }), /* Menu */0);
 
-function make(requestCreateGame, requestJoinGame) {
+function make(createGame, joinGame) {
   var service = FSM.interpret(machine);
   FSM.subscribe(service, (function (state) {
           if (typeof state === "number") {
@@ -82,7 +82,7 @@ function make(requestCreateGame, requestJoinGame) {
           }
           switch (state.TAG | 0) {
             case /* CreatingGame */0 :
-                Curry._1(requestCreateGame, state.userName).then(function (result) {
+                Curry._1(createGame, state.userName).then(function (result) {
                       if (result.TAG === /* Ok */0) {
                         return FSM.send(service, {
                                     TAG: /* OnCreateGameSuccess */1,
@@ -94,7 +94,7 @@ function make(requestCreateGame, requestJoinGame) {
                     });
                 return ;
             case /* JoiningGame */1 :
-                Curry._2(requestJoinGame, state.userName, state.gameCode).then(function (result) {
+                Curry._2(joinGame, state.userName, state.gameCode).then(function (result) {
                       if (result.TAG === /* Ok */0) {
                         return FSM.send(service, /* OnJoinGameSuccess */1);
                       } else {
