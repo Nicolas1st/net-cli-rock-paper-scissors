@@ -8,7 +8,10 @@ module CreateGamePort = {
 }
 
 module RequestGameStatusPort = {
-  type data = Game.status
+  type data =
+    | WaitingForOpponentJoin
+    | InProgress
+    | Finished(Game.finishedContext)
   type t = (~userName: string, ~gameCode: string) => Promise.t<result<data, unit>>
 }
 
@@ -16,13 +19,30 @@ module GameMachine = {
   type state =
     | Loading
     | Status(Game.status)
-  type event = OnGameStatus(Game.status)
+  type event = OnGameStatus(RequestGameStatusPort.data)
+
+  let remoteGameStatusToLocal = (remoteGameStatus: RequestGameStatusPort.data): Game.status =>
+    switch remoteGameStatus {
+    | WaitingForOpponentJoin => WaitingForOpponentJoin
+    | InProgress => ReadyToPlay
+    | Finished(context) => Finished(context)
+    }
 
   let machine = FSM.make(~reducer=(~state, ~event) => {
     switch (state, event) {
-    | (Loading, OnGameStatus(status)) => Status(status)
-    | (Status(currentStatus), OnGameStatus(status)) if currentStatus != status => Status(status)
-    | (_, _) => state
+    | (Status(WaitingForOpponentPlay), OnGameStatus(InProgress)) => state
+    | (_, OnGameStatus(gameStatusData)) =>
+      let remoteGameStatus: Game.status = switch gameStatusData {
+      | WaitingForOpponentJoin => WaitingForOpponentJoin
+      | InProgress => ReadyToPlay
+      | Finished(context) => Finished(context)
+      }
+      switch state {
+      | Loading => Status(remoteGameStatus)
+      | Status(currentGameStatus) if currentGameStatus != remoteGameStatus =>
+        Status(remoteGameStatus)
+      | _ => state
+      }
     }
   }, ~initialState=Loading)
 }

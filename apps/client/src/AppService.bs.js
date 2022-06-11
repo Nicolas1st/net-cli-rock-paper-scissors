@@ -11,23 +11,49 @@ var CreateGamePort = {};
 
 var RequestGameStatusPort = {};
 
+function remoteGameStatusToLocal(remoteGameStatus) {
+  if (typeof remoteGameStatus === "number") {
+    if (remoteGameStatus !== 0) {
+      return /* ReadyToPlay */1;
+    } else {
+      return /* WaitingForOpponentJoin */0;
+    }
+  } else {
+    return /* Finished */{
+            _0: remoteGameStatus._0
+          };
+  }
+}
+
 var machine = FSM.make((function (state, $$event) {
-        if (!state) {
-          return /* Status */{
-                  _0: $$event._0
-                };
+        if (state) {
+          var match = state._0;
+          if (typeof match === "number" && match >= 2) {
+            var match$1 = $$event._0;
+            if (typeof match$1 === "number" && match$1 !== 0) {
+              return state;
+            }
+            
+          }
+          
         }
-        var status = $$event._0;
-        if (Caml_obj.caml_notequal(state._0, status)) {
-          return /* Status */{
-                  _0: status
-                };
-        } else {
+        var gameStatusData = $$event._0;
+        var remoteGameStatus = typeof gameStatusData === "number" ? (
+            gameStatusData !== 0 ? /* ReadyToPlay */1 : /* WaitingForOpponentJoin */0
+          ) : /* Finished */({
+              _0: gameStatusData._0
+            });
+        if (state && !Caml_obj.caml_notequal(state._0, remoteGameStatus)) {
           return state;
+        } else {
+          return /* Status */{
+                  _0: remoteGameStatus
+                };
         }
       }), /* Loading */0);
 
 var GameMachine = {
+  remoteGameStatusToLocal: remoteGameStatusToLocal,
   machine: machine
 };
 

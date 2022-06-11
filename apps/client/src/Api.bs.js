@@ -114,6 +114,134 @@ var bodyStruct$2 = S.record2([
               };
       }), undefined);
 
+var backendStatusStruct = S.record1([
+        "type",
+        S.transform(S.string(undefined), (function (value) {
+                if (value === "finished" || value === "inProccess" || value === "waitingForOpponent") {
+                  return {
+                          TAG: /* Ok */0,
+                          _0: value
+                        };
+                } else {
+                  return {
+                          TAG: /* Error */1,
+                          _0: "The provided status type \"" + value + "\" is unknown"
+                        };
+                }
+              }), undefined, undefined)
+      ])((function (backendStatusType) {
+        return {
+                TAG: /* Ok */0,
+                _0: backendStatusType
+              };
+      }), undefined, undefined);
+
+var moveStruct = S.transform(S.string(undefined), (function (value) {
+        switch (value) {
+          case "paper" :
+              return {
+                      TAG: /* Ok */0,
+                      _0: /* Paper */2
+                    };
+          case "rock" :
+              return {
+                      TAG: /* Ok */0,
+                      _0: /* Rock */0
+                    };
+          case "scissors" :
+              return {
+                      TAG: /* Ok */0,
+                      _0: /* Scissors */1
+                    };
+          default:
+            return {
+                    TAG: /* Error */1,
+                    _0: "The provided move \"" + value + "\" is unknown"
+                  };
+        }
+      }), undefined, undefined);
+
+var outcomeStruct = S.transform(S.string(undefined), (function (value) {
+        switch (value) {
+          case "draw" :
+              return {
+                      TAG: /* Ok */0,
+                      _0: /* Draw */0
+                    };
+          case "loss" :
+              return {
+                      TAG: /* Ok */0,
+                      _0: /* Loss */2
+                    };
+          case "win" :
+              return {
+                      TAG: /* Ok */0,
+                      _0: /* Win */1
+                    };
+          default:
+            return {
+                    TAG: /* Error */1,
+                    _0: "The provided outcome \"" + value + "\" is unknown"
+                  };
+        }
+      }), undefined, undefined);
+
+var finishedContextStruct = S.record3([
+      [
+        "outcome",
+        outcomeStruct
+      ],
+      [
+        "yourMove",
+        moveStruct
+      ],
+      [
+        "opponentsMove",
+        moveStruct
+      ]
+    ], (function (param) {
+        return {
+                TAG: /* Ok */0,
+                _0: {
+                  outcome: param[0],
+                  yourMove: param[1],
+                  opponentsMove: param[2]
+                }
+              };
+      }), undefined, undefined);
+
+var gameResultStruct = S.record1([
+        "gameResult",
+        finishedContextStruct
+      ])((function (finishedContext) {
+        return {
+                TAG: /* Ok */0,
+                _0: finishedContext
+              };
+      }), undefined, undefined);
+
+var statusStruct = S.transformUnknown(S.unknown(undefined), (function (unknown) {
+        return Belt_Result.flatMap(S.parseWith(unknown, undefined, backendStatusStruct), (function (backendStatusType) {
+                      if (backendStatusType === "inProccess") {
+                        return {
+                                TAG: /* Ok */0,
+                                _0: /* InProgress */1
+                              };
+                      } else if (backendStatusType === "finished") {
+                        return Belt_Result.map(S.parseWith(unknown, undefined, gameResultStruct), (function (finishedContext) {
+                                      return /* Finished */{
+                                              _0: finishedContext
+                                            };
+                                    }));
+                      } else {
+                        return {
+                                TAG: /* Ok */0,
+                                _0: /* WaitingForOpponentJoin */0
+                              };
+                      }
+                    }));
+      }), undefined, undefined);
+
 function call$2(userName, gameCode) {
   return Undici.request(host + "/status", {
                   method: "GET",
@@ -123,16 +251,24 @@ function call$2(userName, gameCode) {
                           }, undefined, S.json(bodyStruct$2)))
                 }).then(function (response) {
                 return Curry._1(response.body.json, undefined);
-              }).then(function (param) {
-              return {
-                      TAG: /* Ok */0,
-                      _0: /* WaitingForOpponentJoin */0
-                    };
+              }).then(function (unknown) {
+              var ok = S.parseWith(unknown, undefined, statusStruct);
+              if (ok.TAG === /* Ok */0) {
+                return ok;
+              } else {
+                return Js_exn.raiseError(ok._0);
+              }
             });
 }
 
 var RequestGameStatus = {
   bodyStruct: bodyStruct$2,
+  backendStatusStruct: backendStatusStruct,
+  moveStruct: moveStruct,
+  outcomeStruct: outcomeStruct,
+  finishedContextStruct: finishedContextStruct,
+  gameResultStruct: gameResultStruct,
+  statusStruct: statusStruct,
   call: call$2
 };
 

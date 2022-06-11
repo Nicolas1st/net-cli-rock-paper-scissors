@@ -17,7 +17,7 @@ asyncTest("Works", t => {
       ~requestGameStatus=(~userName, ~gameCode) => {
         t->Assert.deepEqual(userName, "Dmitry", ())
         t->Assert.deepEqual(gameCode, "1234", ())
-        Promise.resolve(Ok(Game.WaitingForOpponentJoin))
+        Promise.resolve(Ok(AppService.RequestGameStatusPort.WaitingForOpponentJoin))
       },
     )
 

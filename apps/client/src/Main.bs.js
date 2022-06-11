@@ -186,20 +186,22 @@ function renderer(appState) {
         var match = appState.gameState;
         if (match) {
           var match$1 = match._0;
-          if (typeof match$1 !== "number") {
-            return make$7(match$1.outcome, match$1.yourMove, match$1.opponentsMove);
-          }
-          switch (match$1) {
-            case /* WaitingForOpponentJoin */0 :
-                UI.message("Waiting when an opponent join the game...");
-                return Promise.resolve(undefined);
-            case /* ReadyToPlay */1 :
-                UI.message("Ready to play! TODO: add moves");
-                return Promise.resolve(undefined);
-            case /* WaitingForOpponentPlay */2 :
-                UI.message("Waiting for an opponent object...");
-                return Promise.resolve(undefined);
-            
+          if (typeof match$1 === "number") {
+            switch (match$1) {
+              case /* WaitingForOpponentJoin */0 :
+                  UI.message("Waiting when an opponent join the game...");
+                  return Promise.resolve(undefined);
+              case /* ReadyToPlay */1 :
+                  UI.message("Ready to play! TODO: add moves");
+                  return Promise.resolve(undefined);
+              case /* WaitingForOpponentPlay */2 :
+                  UI.message("Waiting for an opponent object...");
+                  return Promise.resolve(undefined);
+              
+            }
+          } else {
+            var match$2 = match$1._0;
+            return make$7(match$2.outcome, match$2.yourMove, match$2.opponentsMove);
           }
         } else {
           UI.message("Loading game...");

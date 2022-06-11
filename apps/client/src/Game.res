@@ -1,10 +1,11 @@
 type outcome = Draw | Win | Loss
 type move = Rock | Scissors | Paper
+type finishedContext = {outcome: outcome, yourMove: move, opponentsMove: move}
 type status =
   | WaitingForOpponentJoin
   | ReadyToPlay
   | WaitingForOpponentPlay
-  | Finished({outcome: outcome, yourMove: move, opponentsMove: move})
+  | Finished(finishedContext)
 
 module Code = {
   type t = string
