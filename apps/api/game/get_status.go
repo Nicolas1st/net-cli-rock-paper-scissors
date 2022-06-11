@@ -2,14 +2,14 @@ package game
 
 import "errors"
 
-type result struct {
+type Result struct {
 	Outcome       gameResult
 	YourMove      Move
 	OpponentsMove Move
 }
 
-func (s *gameStorer) GetGameStatus(gameCode uint, username string) (gameStatus, result, error) {
-	var res result
+func (s *gameStorer) GetGameStatus(gameCode uint, username string) (GameStatus, Result, error) {
+	var res Result
 
 	game, ok := s.games[gameCode]
 	if !ok {

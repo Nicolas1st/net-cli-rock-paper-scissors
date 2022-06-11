@@ -1,7 +1,7 @@
 package game
 
 type Game struct {
-	Status  gameStatus
+	Status  GameStatus
 	Player1 Player
 	Player2 Player
 }

@@ -1,9 +1,9 @@
 package game
 
-type gameStatus string
+type GameStatus string
 
 const (
-	Waiting   gameStatus = "waiting"
-	InProcess gameStatus = "in process"
-	Finished  gameStatus = "finished"
+	Waiting   GameStatus = "waiting"
+	InProcess GameStatus = "in process"
+	Finished  GameStatus = "finished"
 )
