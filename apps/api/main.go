@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Nicolas1st/go-rs-rock-paper-scissors/game"
 	"github.com/Nicolas1st/go-rs-rock-paper-scissors/handlers"
-	"github.com/Nicolas1st/go-rs-rock-paper-scissors/model"
 )
 
 func checkForMethod(next http.HandlerFunc, method string) http.HandlerFunc {
@@ -20,14 +20,14 @@ func checkForMethod(next http.HandlerFunc, method string) http.HandlerFunc {
 }
 
 func main() {
-	gameStorer := model.NewGameStorer()
+	gameStorer := game.NewGameStorer()
 	gameController := handlers.NewGamesController(gameStorer)
 
 	m := http.NewServeMux()
 	m.HandleFunc("/game", checkForMethod(gameController.CreateGame, http.MethodPost))
 	m.HandleFunc("/game/connection", checkForMethod(gameController.JoinGame, http.MethodPost))
 	m.HandleFunc("/game/move", checkForMethod(gameController.MakeMove, http.MethodPost))
-	m.HandleFunc("/game/status", checkForMethod(gameController.GetStatus, http.MethodGet))
+	m.HandleFunc("/game/status", checkForMethod(gameController.GetStatus, http.MethodPost))
 
 	s := http.Server{
 		Addr:         ":8880",
