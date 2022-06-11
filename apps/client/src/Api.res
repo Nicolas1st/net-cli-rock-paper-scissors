@@ -10,6 +10,13 @@ let unwrapResult = result => {
 let unitStruct: S.t<unit> =
   S.unknown()->S.transformUnknown(~constructor=unknown => Obj.magic(unknown)->Ok, ())
 
+let gameCodeStruct =
+  S.int()->S.transform(
+    ~constructor=int => int->Js.Int.toString->Ok,
+    ~destructor=value => value->Belt.Int.fromString->Belt.Option.getExn->Ok,
+    (),
+  )
+
 let apiCall = (
   ~path,
   ~method,
@@ -24,6 +31,8 @@ let apiCall = (
   Undici.Request.call(~url=`${host}${path}`, ~options, ())
   ->Promise.then(response => response.body.json(.))
   ->Promise.thenResolve(unknown => {
+    Js.log3(`${host}${path}`, options, unknown)
+
     unknown->S.parseWith(dataStruct)->unwrapResult
   })
 }
@@ -55,7 +64,7 @@ module CreateGame = {
     (),
   )
   let dataStruct = S.record1(
-    ~fields=("gameCode", S.string()),
+    ~fields=("gameCode", gameCodeStruct),
     ~constructor=gameCode => {AppService.CreateGamePort.gameCode: gameCode}->Ok,
     (),
   )
@@ -67,7 +76,7 @@ module CreateGame = {
 module JoinGame = {
   type body = {userName: string, gameCode: string}
   let bodyStruct = S.record2(
-    ~fields=(("userName", S.string()), ("gameCode", S.string())),
+    ~fields=(("userName", S.string()), ("gameCode", gameCodeStruct)),
     ~destructor=({userName, gameCode}) => (userName, gameCode)->Ok,
     (),
   )
@@ -85,13 +94,13 @@ module JoinGame = {
 module RequestGameStatus = {
   type body = {userName: string, gameCode: string}
   let bodyStruct = S.record2(
-    ~fields=(("userName", S.string()), ("gameCode", S.string())),
+    ~fields=(("userName", S.string()), ("gameCode", gameCodeStruct)),
     ~destructor=({userName, gameCode}) => (userName, gameCode)->Ok,
     (),
   )
-  type backendStatusType = [#waitingForOpponent | #inProccess | #finished]
+  type backendStatusType = [#waiting | #InProcess | #finished]
   let backendStatusStruct = S.record1(
-    ~fields=("type", S.string()->S.transform(~constructor=value => {
+    ~fields=("status", S.string()->S.transform(~constructor=value => {
         switch Obj.magic(value) {
         | #...backendStatusType as backendStatusType => backendStatusType->Ok
         | unknownValue => Error(`The provided status type "${unknownValue->Obj.magic}" is unknown`)
@@ -125,8 +134,8 @@ module RequestGameStatus = {
     ->S.parseWith(backendStatusStruct)
     ->Belt.Result.flatMap(backendStatusType => {
       switch backendStatusType {
-      | #waitingForOpponent => AppService.RequestGameStatusPort.WaitingForOpponentJoin->Ok
-      | #inProccess => AppService.RequestGameStatusPort.InProgress->Ok
+      | #waiting => AppService.RequestGameStatusPort.WaitingForOpponentJoin->Ok
+      | #InProcess => AppService.RequestGameStatusPort.InProgress->Ok
       | #finished =>
         unknown
         ->S.parseWith(gameResultStruct)
@@ -151,7 +160,7 @@ module RequestGameStatus = {
 module SendMove = {
   type body = {userName: string, gameCode: string, move: Game.Move.t}
   let bodyStruct = S.record3(
-    ~fields=(("userName", S.string()), ("gameCode", S.string()), ("move", moveStruct)),
+    ~fields=(("userName", S.string()), ("gameCode", gameCodeStruct), ("move", moveStruct)),
     ~destructor=({userName, gameCode, move}) => (userName, gameCode, move)->Ok,
     (),
   )

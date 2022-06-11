@@ -3,6 +3,8 @@
 var S = require("rescript-struct/src/S.bs.js");
 var Js_exn = require("rescript/lib/js/js_exn.js");
 var Undici = require("undici");
+var Belt_Int = require("rescript/lib/js/belt_Int.js");
+var Belt_Option = require("rescript/lib/js/belt_Option.js");
 var Belt_Result = require("rescript/lib/js/belt_Result.js");
 
 var host = "http://localhost:8880";
@@ -22,6 +24,18 @@ var unitStruct = S.transformUnknown(S.unknown(undefined), (function (unknown) {
               };
       }), undefined, undefined);
 
+var gameCodeStruct = S.transform(S.$$int(undefined), (function ($$int) {
+        return {
+                TAG: /* Ok */0,
+                _0: $$int.toString()
+              };
+      }), (function (value) {
+        return {
+                TAG: /* Ok */0,
+                _0: Belt_Option.getExn(Belt_Int.fromString(value))
+              };
+      }), undefined);
+
 function apiCall(path, method, body, bodyStruct, dataStruct) {
   var options_body = unwrapResult(S.serializeWith(body, undefined, S.json(bodyStruct)));
   var options = {
@@ -31,6 +45,7 @@ function apiCall(path, method, body, bodyStruct, dataStruct) {
   return Undici.request(host + path, options).then(function (response) {
                 return response.body.json();
               }).then(function (unknown) {
+              console.log(host + path, options, unknown);
               return unwrapResult(S.parseWith(unknown, undefined, dataStruct));
             });
 }
@@ -90,7 +105,7 @@ var bodyStruct = S.record1([
 
 var dataStruct = S.record1([
         "gameCode",
-        S.string(undefined)
+        gameCodeStruct
       ])((function (gameCode) {
         return {
                 TAG: /* Ok */0,
@@ -119,7 +134,7 @@ var bodyStruct$1 = S.record2([
       ],
       [
         "gameCode",
-        S.string(undefined)
+        gameCodeStruct
       ]
     ], undefined, (function (param) {
         return {
@@ -150,7 +165,7 @@ var bodyStruct$2 = S.record2([
       ],
       [
         "gameCode",
-        S.string(undefined)
+        gameCodeStruct
       ]
     ], undefined, (function (param) {
         return {
@@ -163,9 +178,9 @@ var bodyStruct$2 = S.record2([
       }), undefined);
 
 var backendStatusStruct = S.record1([
-        "type",
+        "status",
         S.transform(S.string(undefined), (function (value) {
-                if (value === "finished" || value === "inProccess" || value === "waitingForOpponent") {
+                if (value === "finished" || value === "InProcess" || value === "waiting") {
                   return {
                           TAG: /* Ok */0,
                           _0: value
@@ -245,7 +260,7 @@ var gameResultStruct = S.record1([
 
 var dataStruct$1 = S.transformUnknown(S.unknown(undefined), (function (unknown) {
         return Belt_Result.flatMap(S.parseWith(unknown, undefined, backendStatusStruct), (function (backendStatusType) {
-                      if (backendStatusType === "inProccess") {
+                      if (backendStatusType === "InProcess") {
                         return {
                                 TAG: /* Ok */0,
                                 _0: /* InProgress */1
@@ -289,7 +304,7 @@ var bodyStruct$3 = S.record3([
       ],
       [
         "gameCode",
-        S.string(undefined)
+        gameCodeStruct
       ],
       [
         "move",
@@ -322,6 +337,7 @@ var SendMove = {
 exports.host = host;
 exports.unwrapResult = unwrapResult;
 exports.unitStruct = unitStruct;
+exports.gameCodeStruct = gameCodeStruct;
 exports.apiCall = apiCall;
 exports.moveStruct = moveStruct;
 exports.CreateGame = CreateGame;
