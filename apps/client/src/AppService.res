@@ -103,7 +103,37 @@ let make = (
   ~sendMove: SendMovePort.t,
 ) => {
   let service = machine->FSM.interpret
+  let maybeGameStatusSyncTimeoutIdRef = ref(None)
+
+  let syncGameStatus = (~gameCode, ~userName) => {
+    requestGameStatus(~gameCode, ~userName)
+    ->Promise.thenResolve(data => {
+      service->FSM.send(GameEvent(OnGameStatus(data)))
+    })
+    ->ignore
+  }
+  let stopGameStatusSync = () => {
+    switch maybeGameStatusSyncTimeoutIdRef.contents {
+    | Some(gameStatusSyncTimeoutId) => Global.clearTimeout(gameStatusSyncTimeoutId)
+    | None => ()
+    }
+  }
+
   let _ = service->FSM.subscribe(state => {
+    switch state {
+    | Game({gameState: Status(Finished(_))}) => stopGameStatusSync()
+    | Game({userName, gameCode}) =>
+      switch maybeGameStatusSyncTimeoutIdRef.contents {
+      | Some(_) => ()
+      | None => {
+          syncGameStatus(~gameCode, ~userName)
+          maybeGameStatusSyncTimeoutIdRef.contents = Some(Global.setTimeout(() => {
+              syncGameStatus(~gameCode, ~userName)
+            }, 3000))
+        }
+      }
+    | _ => stopGameStatusSync()
+    }
     switch state {
     | CreatingGame({userName}) =>
       createGame(~userName)
@@ -115,12 +145,6 @@ let make = (
       joinGame(~userName, ~gameCode)
       ->Promise.thenResolve(() => {
         service->FSM.send(OnJoinGameSuccess)
-      })
-      ->ignore
-    | Game({gameState: Loading, userName, gameCode}) =>
-      requestGameStatus(~gameCode, ~userName)
-      ->Promise.thenResolve(data => {
-        service->FSM.send(GameEvent(OnGameStatus(data)))
       })
       ->ignore
     | Game({gameState: Status(WaitingForOpponentMove({yourMove})), userName, gameCode}) =>
