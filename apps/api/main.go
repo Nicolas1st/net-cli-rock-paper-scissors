@@ -21,6 +21,13 @@ func checkForMethod(next http.HandlerFunc, method string) http.HandlerFunc {
 
 func main() {
 	gameStorer := game.NewGameStorer()
+	go func() {
+		for {
+			time.Sleep(time.Minute)
+			gameStorer.RemoveFinishedGames()
+		}
+	}()
+
 	gameController := handlers.NewGamesController(gameStorer)
 
 	m := http.NewServeMux()
