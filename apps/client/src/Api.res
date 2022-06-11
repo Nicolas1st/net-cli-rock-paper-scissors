@@ -1,6 +1,12 @@
-let host = "0.0.0.0:4000"
+let host = "http://localhost:8880"
 
 module CreateGame = {
+  type body = {userName: string}
+  let bodyStruct = S.record1(
+    ~fields=("userName", S.string()),
+    ~destructor=({userName}) => userName->Ok,
+    (),
+  )
   let dataStruct = S.record1(
     ~fields=("gameCode", S.string()),
     ~constructor=gameCode => {AppService.Port.CreateGame.gameCode: gameCode}->Ok,
@@ -9,7 +15,13 @@ module CreateGame = {
   let call: AppService.Port.CreateGame.t = (~userName) => {
     Undici.Request.call(
       ~url=`${host}/game`,
-      ~options={method: #POST, body: Obj.magic({"userName": userName})},
+      ~options={
+        method: #POST,
+        body: {userName: userName}
+        ->S.serializeWith(bodyStruct->S.json)
+        ->Belt.Result.getExn
+        ->Obj.magic,
+      },
       (),
     )
     ->Promise.then(response => response.body.json())

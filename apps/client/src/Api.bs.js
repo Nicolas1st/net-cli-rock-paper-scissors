@@ -4,8 +4,19 @@ var S = require("rescript-struct/src/S.bs.js");
 var Curry = require("rescript/lib/js/curry.js");
 var Js_exn = require("rescript/lib/js/js_exn.js");
 var Undici = require("undici");
+var Belt_Result = require("rescript/lib/js/belt_Result.js");
 
-var host = "0.0.0.0:4000";
+var host = "http://localhost:8880";
+
+var bodyStruct = S.record1([
+        "userName",
+        S.string(undefined)
+      ])(undefined, (function (param) {
+        return {
+                TAG: /* Ok */0,
+                _0: param.userName
+              };
+      }), undefined);
 
 var dataStruct = S.record1([
         "gameCode",
@@ -22,9 +33,9 @@ var dataStruct = S.record1([
 function call(userName) {
   return Undici.request(host + "/game", {
                   method: "POST",
-                  body: {
-                    userName: userName
-                  }
+                  body: Belt_Result.getExn(S.serializeWith({
+                            userName: userName
+                          }, undefined, S.json(bodyStruct)))
                 }).then(function (response) {
                 return Curry._1(response.body.json, undefined);
               }).then(function (unknown) {
@@ -38,6 +49,7 @@ function call(userName) {
 }
 
 var CreateGame = {
+  bodyStruct: bodyStruct,
   dataStruct: dataStruct,
   call: call
 };
@@ -66,4 +78,4 @@ var JoinGame = {
 exports.host = host;
 exports.CreateGame = CreateGame;
 exports.JoinGame = JoinGame;
-/* dataStruct Not a pure module */
+/* bodyStruct Not a pure module */
