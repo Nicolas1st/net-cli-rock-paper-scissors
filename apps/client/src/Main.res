@@ -1,6 +1,34 @@
 module ManuRenderer = {
   open Console.List
 
+  let promptUserName = () => {
+    Console.Input.prompt(
+      ~message="What's your nickname?",
+      ~validate=value => {
+        if value->Nickname.validate {
+          Ok()
+        } else {
+          Error("Nickname is invalid")
+        }
+      },
+      (),
+    )
+  }
+
+  let promptGameCode = () => {
+    Console.Input.prompt(
+      ~message="Enter a code of the game you want to join. (Ask it from the creator of the game)",
+      ~validate=value => {
+        if value->Game.Code.validate {
+          Ok()
+        } else {
+          Error("Game code is invalid")
+        }
+      },
+      (),
+    )
+  }
+
   type choice = [#createGame | #joinGame | #exit]
 
   let make = () =>
@@ -11,12 +39,22 @@ module ManuRenderer = {
         Choice.make(~name="Join game", ~value=#joinGame),
         Choice.make(~name="Exit", ~value=#exit),
       ],
-    )->Promise.thenResolve(answer => {
+    )->Promise.then(answer => {
       switch answer {
-      | #createGame => AppService.CreateGame({userName: "Hardcoded"})
-      | #joinGame => AppService.JoinGame({userName: "Hardcoded", gameCode: "Hardcoded"})
+      | #createGame =>
+        promptUserName()->Promise.thenResolve(userName => Some(
+          AppService.CreateGame({
+            userName: userName,
+          }),
+        ))
+      | #joinGame =>
+        promptUserName()->Promise.then(userName => {
+          promptGameCode()->Promise.thenResolve(gameCode => {
+            Some(AppService.JoinGame({userName: userName, gameCode: gameCode}))
+          })
+        })
       | #exit => Js.Exn.raiseError("TODO: exit 0")
-      }->Some
+      }
     })
 }
 
@@ -52,7 +90,9 @@ let run = () => {
   )
   let render = state' =>
     renderer(state')
-    ->Promise.thenResolve(answer => answer->Belt.Option.map(service->FSM.send))
+    ->Promise.thenResolve(answer => {
+      answer->Belt.Option.map(service->FSM.send)
+    })
     ->ignore
   let _ = service->FSM.subscribe(state => {
     render(state)

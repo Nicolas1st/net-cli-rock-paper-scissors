@@ -5,9 +5,5 @@ function validate(self) {
   return self.trim() !== "";
 }
 
-var Code = {
-  validate: validate
-};
-
-exports.Code = Code;
+exports.validate = validate;
 /* No side effect */

@@ -1,6 +1,8 @@
 'use strict';
 
+var Curry = require("rescript/lib/js/curry.js");
 var Inquirer = require("inquirer");
+var Belt_Option = require("rescript/lib/js/belt_Option.js");
 
 function message(string) {
   console.clear();
@@ -27,6 +29,31 @@ var Confirm = {
   prompt: prompt
 };
 
+var Question$1 = {};
+
+function prompt$1(message, maybeValidate, param) {
+  return Inquirer.prompt([{
+                  type: "input",
+                  name: _promptName,
+                  message: message,
+                  validate: Belt_Option.map(maybeValidate, (function (validate, input) {
+                          var message = Curry._1(validate, input);
+                          if (message.TAG === /* Ok */0) {
+                            return true;
+                          } else {
+                            return message._0;
+                          }
+                        }))
+                }]).then(function (answer) {
+              return answer[_promptName];
+            });
+}
+
+var Input = {
+  Question: Question$1,
+  prompt: prompt$1
+};
+
 function make(name, value) {
   return {
           name: name,
@@ -38,9 +65,9 @@ var Choice = {
   make: make
 };
 
-var Question$1 = {};
+var Question$2 = {};
 
-function prompt$1(message, choices) {
+function prompt$2(message, choices) {
   return Inquirer.prompt([{
                   type: "list",
                   name: _promptName,
@@ -53,12 +80,13 @@ function prompt$1(message, choices) {
 
 var List = {
   Choice: Choice,
-  Question: Question$1,
-  prompt: prompt$1
+  Question: Question$2,
+  prompt: prompt$2
 };
 
 exports.message = message;
 exports._promptName = _promptName;
 exports.Confirm = Confirm;
+exports.Input = Input;
 exports.List = List;
 /* inquirer Not a pure module */

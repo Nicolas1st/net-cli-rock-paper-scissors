@@ -44,6 +44,40 @@ module Confirm = {
     })
 }
 
+module Input = {
+  module Question = {
+    type t = {
+      @as("type")
+      questionType: _questionType,
+      name: string,
+      message: string,
+      validate: option<string => result<unit, string>>,
+    }
+  }
+
+  @module("inquirer")
+  external _prompt: array<Question.t> => Promise.t<Js.Dict.t<string>> = "prompt"
+
+  let prompt = (~message, ~validate as maybeValidate=?, ()) =>
+    _prompt([
+      {
+        questionType: #input,
+        message: message,
+        name: _promptName,
+        validate: maybeValidate->Belt.Option.map(validate => {
+          input => {
+            switch validate(input) {
+            | Ok() => Obj.magic(true)
+            | Error(message) => Obj.magic(message)
+            }
+          }
+        }),
+      },
+    ])->Promise.thenResolve(answer => {
+      answer->Js.Dict.unsafeGet(_promptName)
+    })
+}
+
 module List = {
   module Choice = {
     type t<'value> = {
