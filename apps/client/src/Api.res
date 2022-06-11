@@ -1,5 +1,12 @@
 let host = "http://localhost:8880"
 
+let unwrapResult = result => {
+  switch result {
+  | Ok(value) => value
+  | Error(message) => Js.Exn.raiseError(message)
+  }
+}
+
 let unitStruct: S.t<unit> =
   S.unknown()->S.transformUnknown(~constructor=unknown => Obj.magic(unknown)->Ok, ())
 
@@ -10,17 +17,14 @@ let apiCall = (
   ~bodyStruct: S.t<'body>,
   ~dataStruct: S.t<'data>,
 ): Promise.t<'data> => {
-  Undici.Request.call(
-    ~url=`${host}${path}`,
-    ~options={
-      method: method,
-      body: body->S.serializeWith(bodyStruct->S.json->Obj.magic)->Belt.Result.getExn->Obj.magic,
-    },
-    (),
-  )
-  ->Promise.then(response => response.body.json())
+  let options: Undici.Request.options = {
+    method: method,
+    body: body->S.serializeWith(bodyStruct->S.json->Obj.magic)->unwrapResult->Obj.magic,
+  }
+  Undici.Request.call(~url=`${host}${path}`, ~options, ())
+  ->Promise.then(response => response.body.json(.))
   ->Promise.thenResolve(unknown => {
-    unknown->S.parseWith(dataStruct)->Belt.Result.getExn
+    unknown->S.parseWith(dataStruct)->unwrapResult
   })
 }
 

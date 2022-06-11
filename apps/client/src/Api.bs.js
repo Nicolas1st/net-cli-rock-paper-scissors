@@ -1,11 +1,19 @@
 'use strict';
 
 var S = require("rescript-struct/src/S.bs.js");
-var Curry = require("rescript/lib/js/curry.js");
+var Js_exn = require("rescript/lib/js/js_exn.js");
 var Undici = require("undici");
 var Belt_Result = require("rescript/lib/js/belt_Result.js");
 
 var host = "http://localhost:8880";
+
+function unwrapResult(result) {
+  if (result.TAG === /* Ok */0) {
+    return result._0;
+  } else {
+    return Js_exn.raiseError(result._0);
+  }
+}
 
 var unitStruct = S.transformUnknown(S.unknown(undefined), (function (unknown) {
         return {
@@ -15,13 +23,15 @@ var unitStruct = S.transformUnknown(S.unknown(undefined), (function (unknown) {
       }), undefined, undefined);
 
 function apiCall(path, method, body, bodyStruct, dataStruct) {
-  return Undici.request(host + path, {
-                  method: method,
-                  body: Belt_Result.getExn(S.serializeWith(body, undefined, S.json(bodyStruct)))
-                }).then(function (response) {
-                return Curry._1(response.body.json, undefined);
+  var options_body = unwrapResult(S.serializeWith(body, undefined, S.json(bodyStruct)));
+  var options = {
+    method: method,
+    body: options_body
+  };
+  return Undici.request(host + path, options).then(function (response) {
+                return response.body.json();
               }).then(function (unknown) {
-              return Belt_Result.getExn(S.parseWith(unknown, undefined, dataStruct));
+              return unwrapResult(S.parseWith(unknown, undefined, dataStruct));
             });
 }
 
@@ -310,6 +320,7 @@ var SendMove = {
 };
 
 exports.host = host;
+exports.unwrapResult = unwrapResult;
 exports.unitStruct = unitStruct;
 exports.apiCall = apiCall;
 exports.moveStruct = moveStruct;
