@@ -24,7 +24,10 @@ module ManuRenderer = {
 
   let promptGameCode = () => {
     UI.Input.prompt(
-      ~message="Enter a code of the game you want to join. (Ask it from the creator of the game)",
+      ~message=[
+        "Enter a code of the game you want to join.",
+        "(Ask it from the creator of the game)\n",
+      ]->UI.MultilineText.make,
       ~validate=value => {
         if value->Game.Code.validate {
           Ok()

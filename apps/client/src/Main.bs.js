@@ -38,7 +38,10 @@ function promptUserName(param) {
 }
 
 function promptGameCode(param) {
-  return UI.Input.prompt("Enter a code of the game you want to join. (Ask it from the creator of the game)", (function (value) {
+  return UI.Input.prompt(UI.MultilineText.make([
+                  "Enter a code of the game you want to join.",
+                  "(Ask it from the creator of the game)\n"
+                ]), (function (value) {
                 if (Game.Code.validate(value)) {
                   return {
                           TAG: /* Ok */0,
