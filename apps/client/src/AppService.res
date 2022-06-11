@@ -7,6 +7,10 @@ module CreateGamePort = {
   type t = (~userName: string) => Promise.t<data>
 }
 
+module SendMovePort = {
+  type t = (~userName: string, ~gameCode: string, ~move: Game.move) => Promise.t<unit>
+}
+
 module RequestGameStatusPort = {
   type data =
     | WaitingForOpponentJoin
@@ -19,7 +23,7 @@ module GameMachine = {
   type state =
     | Loading
     | Status(Game.status)
-  type event = OnGameStatus(RequestGameStatusPort.data)
+  type event = OnGameStatus(RequestGameStatusPort.data) | SendMove(Game.move)
 
   let remoteGameStatusToLocal = (remoteGameStatus: RequestGameStatusPort.data): Game.status =>
     switch remoteGameStatus {
@@ -30,7 +34,8 @@ module GameMachine = {
 
   let machine = FSM.make(~reducer=(~state, ~event) => {
     switch (state, event) {
-    | (Status(WaitingForOpponentPlay), OnGameStatus(InProgress)) => state
+    | (Status(WaitingForOpponentMove(_)), OnGameStatus(InProgress)) => state
+    | (Status(ReadyToPlay), SendMove(move)) => Status(WaitingForOpponentMove({yourMove: move}))
     | (_, OnGameStatus(gameStatusData)) =>
       let remoteGameStatus: Game.status = switch gameStatusData {
       | WaitingForOpponentJoin => WaitingForOpponentJoin
@@ -43,6 +48,7 @@ module GameMachine = {
         Status(remoteGameStatus)
       | _ => state
       }
+    | (_, _) => state
     }
   }, ~initialState=Loading)
 }
@@ -91,6 +97,7 @@ let make = (
   ~createGame: CreateGamePort.t,
   ~joinGame: JoinGamePort.t,
   ~requestGameStatus: RequestGameStatusPort.t,
+  ~sendMove: SendMovePort.t,
 ) => {
   let service = machine->FSM.interpret
   let _ = service->FSM.subscribe(state => {
@@ -113,6 +120,8 @@ let make = (
         service->FSM.send(GameEvent(OnGameStatus(data)))
       })
       ->ignore
+    | Game({gameState: Status(WaitingForOpponentMove({yourMove})), userName, gameCode}) =>
+      sendMove(~gameCode, ~userName, ~move=yourMove)->ignore
     | _ => ()
     }
   })

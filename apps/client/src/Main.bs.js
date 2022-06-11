@@ -10,6 +10,18 @@ var Nickname = require("./Nickname.bs.js");
 var AppService = require("./AppService.bs.js");
 var Belt_Option = require("rescript/lib/js/belt_Option.js");
 
+function moveToText(move) {
+  switch (move) {
+    case /* Rock */0 :
+        return "Rock 🪨";
+    case /* Scissors */1 :
+        return "Scissors ✂️";
+    case /* Paper */2 :
+        return "Paper 📄";
+    
+  }
+}
+
 function promptUserName(param) {
   return UI.Input.prompt("What's your nickname?", (function (value) {
                 if (Nickname.validate(value)) {
@@ -113,12 +125,15 @@ var GameStatusWaitingForOpponentJoinRenderer = {
   make: make$4
 };
 
-function make$5(param) {
-  UI.message("Waiting for an opponent object...");
+function make$5(yourMove) {
+  UI.message(UI.MultilineText.make([
+            "Waiting for the opponent move...",
+            "Your move: " + moveToText(yourMove)
+          ]));
   return Promise.resolve(undefined);
 }
 
-var GameStatusWaitingForOpponentPlayRenderer = {
+var GameStatusWaitingForOpponentMoveRenderer = {
   make: make$5
 };
 
@@ -130,18 +145,6 @@ function make$6(param) {
 var GameStatusReadyToPlayRenderer = {
   make: make$6
 };
-
-function moveToText(move) {
-  switch (move) {
-    case /* Rock */0 :
-        return "Rock 🪨";
-    case /* Scissors */1 :
-        return "Scissors ✂️";
-    case /* Paper */2 :
-        return "Paper 📄";
-    
-  }
-}
 
 function make$7(outcome, yourMove, opponentsMove) {
   var outcomeText;
@@ -157,17 +160,16 @@ function make$7(outcome, yourMove, opponentsMove) {
         break;
     
   }
-  UI.message([
-          "Game finished!",
-          "Outcome: " + outcomeText,
-          "Your move: " + moveToText(yourMove),
-          "Opponent's move: " + moveToText(opponentsMove)
-        ].join("\n"));
+  UI.message(UI.MultilineText.make([
+            "Game finished!",
+            "Outcome: " + outcomeText,
+            "Your move: " + moveToText(yourMove),
+            "Opponent's move: " + moveToText(opponentsMove)
+          ]));
   return Promise.resolve(undefined);
 }
 
 var GameStatusFinishedRenderer = {
-  moveToText: moveToText,
   make: make$7
 };
 
@@ -187,19 +189,16 @@ function renderer(appState) {
         if (match) {
           var match$1 = match._0;
           if (typeof match$1 === "number") {
-            switch (match$1) {
-              case /* WaitingForOpponentJoin */0 :
-                  UI.message("Waiting when an opponent join the game...");
-                  return Promise.resolve(undefined);
-              case /* ReadyToPlay */1 :
-                  UI.message("Ready to play! TODO: add moves");
-                  return Promise.resolve(undefined);
-              case /* WaitingForOpponentPlay */2 :
-                  UI.message("Waiting for an opponent object...");
-                  return Promise.resolve(undefined);
-              
+            if (match$1 === /* WaitingForOpponentJoin */0) {
+              UI.message("Waiting when an opponent join the game...");
+              return Promise.resolve(undefined);
             }
+            UI.message("Ready to play! TODO: add moves");
+            return Promise.resolve(undefined);
           } else {
+            if (match$1.TAG === /* WaitingForOpponentMove */0) {
+              return make$5(match$1.yourMove);
+            }
             var match$2 = match$1._0;
             return make$7(match$2.outcome, match$2.yourMove, match$2.opponentsMove);
           }
@@ -212,7 +211,7 @@ function renderer(appState) {
 }
 
 function run(param) {
-  var service = AppService.make(Api.CreateGame.call, Api.JoinGame.call, Api.RequestGameStatus.call);
+  var service = AppService.make(Api.CreateGame.call, Api.JoinGame.call, Api.RequestGameStatus.call, Api.SendMove.call);
   var render = function (state$p) {
     renderer(state$p).then(function (answer) {
           return Belt_Option.map(answer, (function (param) {
@@ -227,12 +226,13 @@ function run(param) {
 
 run(undefined);
 
+exports.moveToText = moveToText;
 exports.ManuRenderer = ManuRenderer;
 exports.CreatingGameRenderer = CreatingGameRenderer;
 exports.JoiningGameRenderer = JoiningGameRenderer;
 exports.GameLoadingRenderer = GameLoadingRenderer;
 exports.GameStatusWaitingForOpponentJoinRenderer = GameStatusWaitingForOpponentJoinRenderer;
-exports.GameStatusWaitingForOpponentPlayRenderer = GameStatusWaitingForOpponentPlayRenderer;
+exports.GameStatusWaitingForOpponentMoveRenderer = GameStatusWaitingForOpponentMoveRenderer;
 exports.GameStatusReadyToPlayRenderer = GameStatusReadyToPlayRenderer;
 exports.GameStatusFinishedRenderer = GameStatusFinishedRenderer;
 exports.renderer = renderer;

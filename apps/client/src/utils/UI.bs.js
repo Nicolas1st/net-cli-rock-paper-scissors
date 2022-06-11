@@ -4,6 +4,14 @@ var Curry = require("rescript/lib/js/curry.js");
 var Inquirer = require("inquirer");
 var Belt_Option = require("rescript/lib/js/belt_Option.js");
 
+function make(strings) {
+  return strings.join("\n");
+}
+
+var MultilineText = {
+  make: make
+};
+
 function message(string) {
   console.clear();
   console.log(string);
@@ -54,7 +62,7 @@ var Input = {
   prompt: prompt$1
 };
 
-function make(name, value) {
+function make$1(name, value) {
   return {
           name: name,
           value: value
@@ -62,7 +70,7 @@ function make(name, value) {
 }
 
 var Choice = {
-  make: make
+  make: make$1
 };
 
 var Question$2 = {};
@@ -84,6 +92,7 @@ var List = {
   prompt: prompt$2
 };
 
+exports.MultilineText = MultilineText;
 exports.message = message;
 exports._promptName = _promptName;
 exports.Confirm = Confirm;

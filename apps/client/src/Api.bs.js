@@ -25,6 +25,49 @@ function apiCall(path, method, body, bodyStruct, dataStruct) {
             });
 }
 
+var moveStruct = S.transform(S.string(undefined), (function (data) {
+        switch (data) {
+          case "paper" :
+              return {
+                      TAG: /* Ok */0,
+                      _0: /* Paper */2
+                    };
+          case "rock" :
+              return {
+                      TAG: /* Ok */0,
+                      _0: /* Rock */0
+                    };
+          case "scissors" :
+              return {
+                      TAG: /* Ok */0,
+                      _0: /* Scissors */1
+                    };
+          default:
+            return {
+                    TAG: /* Error */1,
+                    _0: "The provided move \"" + data + "\" is unknown"
+                  };
+        }
+      }), (function (value) {
+        var tmp;
+        switch (value) {
+          case /* Rock */0 :
+              tmp = "rock";
+              break;
+          case /* Scissors */1 :
+              tmp = "scissors";
+              break;
+          case /* Paper */2 :
+              tmp = "paper";
+              break;
+          
+        }
+        return {
+                TAG: /* Ok */0,
+                _0: tmp
+              };
+      }), undefined);
+
 var bodyStruct = S.record1([
         "userName",
         S.string(undefined)
@@ -131,31 +174,6 @@ var backendStatusStruct = S.record1([
               };
       }), undefined, undefined);
 
-var moveStruct = S.transform(S.string(undefined), (function (value) {
-        switch (value) {
-          case "paper" :
-              return {
-                      TAG: /* Ok */0,
-                      _0: /* Paper */2
-                    };
-          case "rock" :
-              return {
-                      TAG: /* Ok */0,
-                      _0: /* Rock */0
-                    };
-          case "scissors" :
-              return {
-                      TAG: /* Ok */0,
-                      _0: /* Scissors */1
-                    };
-          default:
-            return {
-                    TAG: /* Error */1,
-                    _0: "The provided move \"" + value + "\" is unknown"
-                  };
-        }
-      }), undefined, undefined);
-
 var outcomeStruct = S.transform(S.string(undefined), (function (value) {
         switch (value) {
           case "draw" :
@@ -238,7 +256,7 @@ var dataStruct$1 = S.transformUnknown(S.unknown(undefined), (function (unknown) 
       }), undefined, undefined);
 
 function call$2(userName, gameCode) {
-  return apiCall("/status", "GET", {
+  return apiCall("/game/status", "GET", {
               userName: userName,
               gameCode: gameCode
             }, bodyStruct$2, dataStruct$1);
@@ -247,7 +265,6 @@ function call$2(userName, gameCode) {
 var RequestGameStatus = {
   bodyStruct: bodyStruct$2,
   backendStatusStruct: backendStatusStruct,
-  moveStruct: moveStruct,
   outcomeStruct: outcomeStruct,
   finishedContextStruct: finishedContextStruct,
   gameResultStruct: gameResultStruct,
@@ -255,10 +272,49 @@ var RequestGameStatus = {
   call: call$2
 };
 
+var bodyStruct$3 = S.record3([
+      [
+        "userName",
+        S.string(undefined)
+      ],
+      [
+        "gameCode",
+        S.string(undefined)
+      ],
+      [
+        "move",
+        moveStruct
+      ]
+    ], undefined, (function (param) {
+        return {
+                TAG: /* Ok */0,
+                _0: [
+                  param.userName,
+                  param.gameCode,
+                  param.move
+                ]
+              };
+      }), undefined);
+
+function call$3(userName, gameCode, move) {
+  return apiCall("/game/move", "POST", {
+              userName: userName,
+              gameCode: gameCode,
+              move: move
+            }, bodyStruct$3, unitStruct);
+}
+
+var SendMove = {
+  bodyStruct: bodyStruct$3,
+  call: call$3
+};
+
 exports.host = host;
 exports.unitStruct = unitStruct;
 exports.apiCall = apiCall;
+exports.moveStruct = moveStruct;
 exports.CreateGame = CreateGame;
 exports.JoinGame = JoinGame;
 exports.RequestGameStatus = RequestGameStatus;
+exports.SendMove = SendMove;
 /* unitStruct Not a pure module */

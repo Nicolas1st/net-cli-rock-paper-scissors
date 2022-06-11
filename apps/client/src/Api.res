@@ -24,6 +24,25 @@ let apiCall = (
   })
 }
 
+let moveStruct = S.string()->S.transform(
+  ~constructor=data => {
+    switch data {
+    | "rock" => Game.Rock->Ok
+    | "paper" => Paper->Ok
+    | "scissors" => Scissors->Ok
+    | unknownData => Error(`The provided move "${unknownData}" is unknown`)
+    }
+  },
+  ~destructor=value => {
+    switch value {
+    | Rock => "rock"
+    | Paper => "paper"
+    | Scissors => "scissors"
+    }->Ok
+  },
+  (),
+)
+
 module CreateGame = {
   type body = {userName: string}
   let bodyStruct = S.record1(
@@ -78,14 +97,6 @@ module RequestGameStatus = {
     (),
   )
 
-  let moveStruct = S.string()->S.transform(~constructor=value => {
-    switch value {
-    | "rock" => Game.Rock->Ok
-    | "paper" => Paper->Ok
-    | "scissors" => Scissors->Ok
-    | unknownValue => Error(`The provided move "${unknownValue}" is unknown`)
-    }
-  }, ())
   let outcomeStruct = S.string()->S.transform(~constructor=value => {
     switch value {
     | "win" => Game.Win->Ok
@@ -124,11 +135,29 @@ module RequestGameStatus = {
 
   let call: AppService.RequestGameStatusPort.t = (~userName, ~gameCode) => {
     apiCall(
-      ~path="/status",
+      ~path="/game/status",
       ~method=#GET,
       ~bodyStruct,
       ~dataStruct,
       ~body={userName: userName, gameCode: gameCode},
+    )
+  }
+}
+
+module SendMove = {
+  type body = {userName: string, gameCode: string, move: Game.move}
+  let bodyStruct = S.record3(
+    ~fields=(("userName", S.string()), ("gameCode", S.string()), ("move", moveStruct)),
+    ~destructor=({userName, gameCode, move}) => (userName, gameCode, move)->Ok,
+    (),
+  )
+  let call: AppService.SendMovePort.t = (~userName, ~gameCode, ~move) => {
+    apiCall(
+      ~path="/game/move",
+      ~method=#POST,
+      ~bodyStruct,
+      ~dataStruct=unitStruct,
+      ~body={userName: userName, gameCode: gameCode, move: move},
     )
   }
 }

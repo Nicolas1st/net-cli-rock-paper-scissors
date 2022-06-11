@@ -1,3 +1,10 @@
+let moveToText = (move: Game.move) =>
+  switch move {
+  | Rock => `Rock 🪨`
+  | Scissors => `Scissors ✂️`
+  | Paper => `Paper 📄`
+  }
+
 module ManuRenderer = {
   open UI.List
 
@@ -86,9 +93,14 @@ module GameStatusWaitingForOpponentJoinRenderer = {
   }
 }
 
-module GameStatusWaitingForOpponentPlayRenderer = {
-  let make = () => {
-    UI.message("Waiting for an opponent object...")
+module GameStatusWaitingForOpponentMoveRenderer = {
+  let make = (~yourMove: Game.move) => {
+    UI.message(
+      [
+        "Waiting for the opponent move...",
+        `Your move: ${yourMove->moveToText}`,
+      ]->UI.MultilineText.make,
+    )
     Promise.resolve(None)
   }
 }
@@ -101,12 +113,6 @@ module GameStatusReadyToPlayRenderer = {
 }
 
 module GameStatusFinishedRenderer = {
-  let moveToText = (move: Game.move) =>
-    switch move {
-    | Rock => `Rock 🪨`
-    | Scissors => `Scissors ✂️`
-    | Paper => `Paper 📄`
-    }
   let make = (~outcome: Game.outcome, ~yourMove, ~opponentsMove) => {
     let outcomeText = switch outcome {
     | Win => `You won 🏆`
@@ -120,7 +126,7 @@ module GameStatusFinishedRenderer = {
         `Outcome: ${outcomeText}`,
         `Your move: ${yourMove->moveToText}`,
         `Opponent's move: ${opponentsMove->moveToText}`,
-      ]->Js.Array2.joinWith("\n"),
+      ]->UI.MultilineText.make,
     )
     Promise.resolve(None)
   }
@@ -135,8 +141,8 @@ let renderer = (appState: AppService.state) => {
   | Game({gameState: Status(WaitingForOpponentJoin)}) =>
     GameStatusWaitingForOpponentJoinRenderer.make()
   | Game({gameState: Status(ReadyToPlay)}) => GameStatusReadyToPlayRenderer.make()
-  | Game({gameState: Status(WaitingForOpponentPlay)}) =>
-    GameStatusWaitingForOpponentPlayRenderer.make()
+  | Game({gameState: Status(WaitingForOpponentMove({yourMove}))}) =>
+    GameStatusWaitingForOpponentMoveRenderer.make(~yourMove)
   | Game({gameState: Status(Finished({outcome, yourMove, opponentsMove}))}) =>
     GameStatusFinishedRenderer.make(~outcome, ~yourMove, ~opponentsMove)
   }
@@ -147,16 +153,26 @@ let run = () => {
     ~createGame=Api.CreateGame.call,
     ~joinGame=Api.JoinGame.call,
     ~requestGameStatus=Api.RequestGameStatus.call,
+    ~sendMove=Api.SendMove.call,
   )
   // let service = AppService.make(
   //   ~createGame=(~userName as _) => {
-  //     Promise.resolve(Ok({AppService.CreateGamePort.gameCode: "1234"}))
+  //     Promise.resolve({AppService.CreateGamePort.gameCode: "1234"})
   //   },
   //   ~joinGame=(~userName as _, ~gameCode as _) => {
-  //     Promise.resolve(Ok())
+  //     Promise.resolve()
   //   },
   //   ~requestGameStatus=(~userName as _, ~gameCode as _) => {
-  //     Promise.resolve(Ok(Game.Finished({outcome: Win, yourMove: Rock, opponentsMove: Scissors})))
+  //     Promise.resolve(
+  //       AppService.RequestGameStatusPort.Finished({
+  //         outcome: Win,
+  //         yourMove: Rock,
+  //         opponentsMove: Scissors,
+  //       }),
+  //     )
+  //   },
+  //   ~sendMove=(~userName as _, ~gameCode as _, ~move as _) => {
+  //     Promise.resolve()
   //   },
   // )
   let render = state' =>

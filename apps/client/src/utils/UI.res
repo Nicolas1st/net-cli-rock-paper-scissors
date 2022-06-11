@@ -1,5 +1,11 @@
 @val external _clear: unit => unit = "console.clear"
 
+module MultilineText = {
+  let make = strings => {
+    strings->Js.Array2.joinWith("\n")
+  }
+}
+
 let message = string => {
   _clear()
   Js.log(string)

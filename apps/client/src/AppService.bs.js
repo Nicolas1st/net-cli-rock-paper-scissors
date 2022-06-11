@@ -8,6 +8,8 @@ var JoinGamePort = {};
 
 var CreateGamePort = {};
 
+var SendMovePort = {};
+
 var RequestGameStatusPort = {};
 
 function remoteGameStatusToLocal(remoteGameStatus) {
@@ -18,7 +20,8 @@ function remoteGameStatusToLocal(remoteGameStatus) {
       return /* WaitingForOpponentJoin */0;
     }
   } else {
-    return /* Finished */{
+    return {
+            TAG: /* Finished */1,
             _0: remoteGameStatus._0
           };
   }
@@ -26,20 +29,37 @@ function remoteGameStatusToLocal(remoteGameStatus) {
 
 var machine = FSM.make((function (state, $$event) {
         if (state) {
-          var match = state._0;
-          if (typeof match === "number" && match >= 2) {
-            var match$1 = $$event._0;
-            if (typeof match$1 === "number" && match$1 !== 0) {
+          var tmp = state._0;
+          if (typeof tmp === "number") {
+            if (tmp !== /* WaitingForOpponentJoin */0 && $$event.TAG !== /* OnGameStatus */0) {
+              return /* Status */{
+                      _0: {
+                        TAG: /* WaitingForOpponentMove */0,
+                        yourMove: $$event._0
+                      }
+                    };
+            }
+            
+          } else if (tmp.TAG === /* WaitingForOpponentMove */0) {
+            if ($$event.TAG !== /* OnGameStatus */0) {
+              return state;
+            }
+            var match = $$event._0;
+            if (typeof match === "number" && match !== 0) {
               return state;
             }
             
           }
           
         }
+        if ($$event.TAG !== /* OnGameStatus */0) {
+          return state;
+        }
         var gameStatusData = $$event._0;
         var remoteGameStatus = typeof gameStatusData === "number" ? (
             gameStatusData !== 0 ? /* ReadyToPlay */1 : /* WaitingForOpponentJoin */0
-          ) : /* Finished */({
+          ) : ({
+              TAG: /* Finished */1,
               _0: gameStatusData._0
             });
         if (state && !Caml_obj.caml_notequal(state._0, remoteGameStatus)) {
@@ -116,7 +136,7 @@ var machine$1 = FSM.make((function (state, $$event) {
         }
       }), /* Menu */0);
 
-function make(createGame, joinGame, requestGameStatus) {
+function make(createGame, joinGame, requestGameStatus, sendMove) {
   var service = FSM.interpret(machine$1);
   FSM.subscribe(service, (function (state) {
           if (typeof state === "number") {
@@ -137,13 +157,25 @@ function make(createGame, joinGame, requestGameStatus) {
                     });
                 return ;
             case /* Game */2 :
-                if (state.gameState) {
+                var match = state.gameState;
+                var gameCode = state.gameCode;
+                var userName = state.userName;
+                if (match) {
+                  var match$1 = match._0;
+                  if (typeof match$1 === "number") {
+                    return ;
+                  }
+                  if (match$1.TAG !== /* WaitingForOpponentMove */0) {
+                    return ;
+                  }
+                  Curry._3(sendMove, userName, gameCode, match$1.yourMove);
                   return ;
                 } else {
-                  Curry._2(requestGameStatus, state.userName, state.gameCode).then(function (data) {
+                  Curry._2(requestGameStatus, userName, gameCode).then(function (data) {
                         return FSM.send(service, {
                                     TAG: /* GameEvent */3,
-                                    _0: /* OnGameStatus */{
+                                    _0: {
+                                      TAG: /* OnGameStatus */0,
                                       _0: data
                                     }
                                   });
@@ -158,6 +190,7 @@ function make(createGame, joinGame, requestGameStatus) {
 
 exports.JoinGamePort = JoinGamePort;
 exports.CreateGamePort = CreateGamePort;
+exports.SendMovePort = SendMovePort;
 exports.RequestGameStatusPort = RequestGameStatusPort;
 exports.GameMachine = GameMachine;
 exports.machine = machine$1;

@@ -4,7 +4,7 @@ type finishedContext = {outcome: outcome, yourMove: move, opponentsMove: move}
 type status =
   | WaitingForOpponentJoin
   | ReadyToPlay
-  | WaitingForOpponentPlay
+  | WaitingForOpponentMove({yourMove: move})
   | Finished(finishedContext)
 
 module Code = {
