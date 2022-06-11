@@ -21,3 +21,17 @@ module CreateGame = {
     })
   }
 }
+
+module JoinGame = {
+  let call: AppService.Port.JoinGame.t = (~userName, ~gameCode) => {
+    Undici.Request.call(
+      ~url=`${host}/game`,
+      ~options={method: #POST, body: Obj.magic({"userName": userName, "gameCode": gameCode})},
+      (),
+    )
+    ->Promise.then(response => response.body.json())
+    ->Promise.thenResolve(_ => {
+      Ok()
+    })
+  }
+}
