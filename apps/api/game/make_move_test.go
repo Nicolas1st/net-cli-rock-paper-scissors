@@ -17,6 +17,11 @@ func TestMakeMove(t *testing.T) {
 		t.Error("The game should not exist")
 	}
 
+	// try making impossible move
+	if err := gs.MakeMove(gameCode, player1Name, Move("impossible move")); err == nil {
+		t.Error("Should now allow making impossible moves")
+	}
+
 	// the third player can not make a move
 	if err := gs.MakeMove(gameCode, "player3", Rock); err == nil {
 		t.Error("The third player should not be able to make a move")

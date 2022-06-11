@@ -3,6 +3,10 @@ package game
 import "errors"
 
 func (s *gameStorer) MakeMove(gameCode uint, playerName string, move Move) error {
+	if move != Rock && move != Paper && move != Scissors {
+		return errors.New("impossible move")
+	}
+
 	game, ok := s.games[gameCode]
 	if !ok {
 		return errors.New("does not exist")
