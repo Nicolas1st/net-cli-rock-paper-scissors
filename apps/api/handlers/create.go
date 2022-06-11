@@ -21,10 +21,15 @@ func (c *gameController) CreateGame(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.UserName == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	// create game
 	var resp CreateGameResponse
+
 	gameCode := c.gameStorer.CreateGame(req.UserName)
 	resp.GameCode = gameCode
-
 	json.NewEncoder(w).Encode(resp)
 }
