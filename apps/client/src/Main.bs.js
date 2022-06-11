@@ -1,18 +1,18 @@
 'use strict';
 
+var UI = require("./utils/UI.bs.js");
 var Api = require("./Api.bs.js");
 var FSM = require("./utils/FSM.bs.js");
 var Game = require("./Game.bs.js");
 var Curry = require("rescript/lib/js/curry.js");
 var Js_exn = require("rescript/lib/js/js_exn.js");
-var Console = require("./utils/Console.bs.js");
 var Js_json = require("rescript/lib/js/js_json.js");
 var Nickname = require("./Nickname.bs.js");
 var AppService = require("./AppService.bs.js");
 var Belt_Option = require("rescript/lib/js/belt_Option.js");
 
 function promptUserName(param) {
-  return Console.Input.prompt("What's your nickname?", (function (value) {
+  return UI.Input.prompt("What's your nickname?", (function (value) {
                 if (Nickname.validate(value)) {
                   return {
                           TAG: /* Ok */0,
@@ -28,7 +28,7 @@ function promptUserName(param) {
 }
 
 function promptGameCode(param) {
-  return Console.Input.prompt("Enter a code of the game you want to join. (Ask it from the creator of the game)", (function (value) {
+  return UI.Input.prompt("Enter a code of the game you want to join. (Ask it from the creator of the game)", (function (value) {
                 if (Game.Code.validate(value)) {
                   return {
                           TAG: /* Ok */0,
@@ -44,10 +44,10 @@ function promptGameCode(param) {
 }
 
 function make(param) {
-  return Console.List.prompt("Game menu", [
-                Curry._2(Console.List.Choice.make, "Create game", "createGame"),
-                Curry._2(Console.List.Choice.make, "Join game", "joinGame"),
-                Curry._2(Console.List.Choice.make, "Exit", "exit")
+  return UI.List.prompt("Game menu", [
+                Curry._2(UI.List.Choice.make, "Create game", "createGame"),
+                Curry._2(UI.List.Choice.make, "Join game", "joinGame"),
+                Curry._2(UI.List.Choice.make, "Exit", "exit")
               ]).then(function (answer) {
               if (answer === "createGame") {
                 return promptUserName(undefined).then(function (userName) {
@@ -79,7 +79,7 @@ var ManuRenderer = {
 };
 
 function make$1(param) {
-  Console.message("Creating game...");
+  UI.message("Creating game...");
   return Promise.resolve(undefined);
 }
 
@@ -93,14 +93,14 @@ function renderer(appState) {
   }
   switch (appState.TAG | 0) {
     case /* CreatingGame */0 :
-        Console.message("Creating game...");
+        UI.message("Creating game...");
         return Promise.resolve(undefined);
     case /* JoiningGame */1 :
     case /* Game */2 :
         break;
     
   }
-  return Console.Confirm.prompt("Unknown state, do you want to exit? (" + Js_json.serializeExn(appState) + ")").then(function (answer) {
+  return UI.Confirm.prompt("Unknown state, do you want to exit? (" + Js_json.serializeExn(appState) + ")").then(function (answer) {
               if (answer) {
                 return Js_exn.raiseError("TODO: exit 0");
               } else {

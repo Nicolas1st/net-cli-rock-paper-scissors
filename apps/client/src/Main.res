@@ -1,8 +1,8 @@
 module ManuRenderer = {
-  open Console.List
+  open UI.List
 
   let promptUserName = () => {
-    Console.Input.prompt(
+    UI.Input.prompt(
       ~message="What's your nickname?",
       ~validate=value => {
         if value->Nickname.validate {
@@ -16,7 +16,7 @@ module ManuRenderer = {
   }
 
   let promptGameCode = () => {
-    Console.Input.prompt(
+    UI.Input.prompt(
       ~message="Enter a code of the game you want to join. (Ask it from the creator of the game)",
       ~validate=value => {
         if value->Game.Code.validate {
@@ -60,7 +60,7 @@ module ManuRenderer = {
 
 module CreatingGameRenderer = {
   let make = () => {
-    Console.message("Creating game...")
+    UI.message("Creating game...")
     Promise.resolve(None)
   }
 }
@@ -70,7 +70,7 @@ let rec renderer = (appState: AppService.state) => {
   | Menu => ManuRenderer.make()
   | CreatingGame(_) => CreatingGameRenderer.make()
   | _ =>
-    Console.Confirm.prompt(
+    UI.Confirm.prompt(
       ~message=`Unknown state, do you want to exit? (${appState->Js.Json.serializeExn})`,
     )->Promise.then(answer => {
       if answer {
