@@ -176,6 +176,8 @@ let run = () => {
   let _ = service->FSM.subscribe(state => {
     render(state)
   })
+
+  service->FSM.start
   render(service->FSM.getCurrentState)
 }
 

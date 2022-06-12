@@ -51,6 +51,7 @@ asyncTest("Successfully create game and start waiting for player", t => {
 
     t->Assert.deepEqual(service->FSM.getCurrentState, AppService.Menu, ())
 
+    service->FSM.start
     service->FSM.send(AppService.CreateGame({nickname: defaultNickname}))
   })
 })
@@ -131,6 +132,7 @@ asyncTest("Successfully join game and start playing", t => {
 
     t->Assert.deepEqual(service->FSM.getCurrentState, AppService.Menu, ())
 
+    service->FSM.start
     service->FSM.send(AppService.JoinGame({nickname: defaultNickname, gameCode: defaultGameCode}))
   })
 })

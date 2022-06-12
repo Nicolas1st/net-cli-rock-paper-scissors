@@ -18,4 +18,6 @@ let subscribe: (service<'state, 'event>, 'state => unit, unit) => unit
 
 let getCurrentState: service<'state, 'event> => 'state
 
+let start: service<'state, 'event> => unit
+
 let stop: service<'state, 'event> => unit

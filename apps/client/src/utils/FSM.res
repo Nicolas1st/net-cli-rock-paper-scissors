@@ -15,6 +15,7 @@ type t<'state, 'event> = {
 type service<'state, 'event> = {
   fsm: t<'state, 'event>,
   mutable state: 'state,
+  mutable isStarted: bool,
   subscribtionSet: Set.t<'state => unit>,
 }
 
@@ -30,14 +31,16 @@ let transition = (machine, ~state, ~event) => {
 let getInitialState = machine => machine.initialState
 
 let interpret = machine => {
-  {fsm: machine, state: machine.initialState, subscribtionSet: Set.make()}
+  {fsm: machine, state: machine.initialState, subscribtionSet: Set.make(), isStarted: false}
 }
 
 let send = (service, event) => {
-  let newState = service.fsm->transition(~state=service.state, ~event)
-  if newState !== service.state {
-    service.state = newState
-    service.subscribtionSet->Set.forEach(fn => fn(newState))
+  if service.isStarted {
+    let newState = service.fsm->transition(~state=service.state, ~event)
+    if newState !== service.state {
+      service.state = newState
+      service.subscribtionSet->Set.forEach(fn => fn(newState))
+    }
   }
 }
 
@@ -52,7 +55,11 @@ let getCurrentState = service => {
   service.state
 }
 
+let start = service => {
+  service.isStarted = true
+}
+
 let stop = service => {
-  // TODO: stop handling transitions
   service.subscribtionSet->Set.clear
+  service.isStarted = false
 }
