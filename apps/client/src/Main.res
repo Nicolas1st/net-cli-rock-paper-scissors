@@ -8,7 +8,7 @@ let moveToText = (move: Game.Move.t) =>
 module ManuRenderer = {
   open UI.List
 
-  let promptUserName = () => {
+  let promptNickname = () => {
     UI.Input.prompt(
       ~message="What's your nickname?",
       ~validate=value => {
@@ -50,15 +50,20 @@ module ManuRenderer = {
     )->Promise.then(answer => {
       switch answer {
       | #createGame =>
-        promptUserName()->Promise.thenResolve(userName => Some(
+        promptNickname()->Promise.thenResolve(nickname => Some(
           AppService.CreateGame({
-            userName: userName,
+            nickname: nickname->Nickname.unsafeFromString,
           }),
         ))
       | #joinGame =>
-        promptUserName()->Promise.then(userName => {
+        promptNickname()->Promise.then(nickname => {
           promptGameCode()->Promise.thenResolve(gameCode => {
-            Some(AppService.JoinGame({userName: userName, gameCode: gameCode}))
+            Some(
+              AppService.JoinGame({
+                nickname: nickname->Nickname.unsafeFromString,
+                gameCode: gameCode->Game.Code.unsafeFromString,
+              }),
+            )
           })
         })
       | #exit => Some(AppService.Exit)->Promise.resolve
@@ -92,7 +97,7 @@ module GameStatusWaitingForOpponentJoinRenderer = {
     UI.message(
       [
         "Waiting when an opponent joins the game...",
-        `Game code: ${gameCode}`,
+        `Game code: ${gameCode->Game.Code.toString}`,
       ]->UI.MultilineText.make,
     )
     Promise.resolve(None)

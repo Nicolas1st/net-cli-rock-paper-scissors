@@ -1,14 +1,14 @@
 module JoinGamePort = {
-  type t = (~userName: string, ~gameCode: string) => Promise.t<unit>
+  type t = (~nickname: Nickname.t, ~gameCode: Game.Code.t) => Promise.t<unit>
 }
 
 module CreateGamePort = {
-  type data = {gameCode: string}
-  type t = (~userName: string) => Promise.t<data>
+  type data = {gameCode: Game.Code.t}
+  type t = (~nickname: Nickname.t) => Promise.t<data>
 }
 
 module SendMovePort = {
-  type t = (~userName: string, ~gameCode: string, ~move: Game.Move.t) => Promise.t<unit>
+  type t = (~nickname: Nickname.t, ~gameCode: Game.Code.t, ~move: Game.Move.t) => Promise.t<unit>
 }
 
 module RequestGameStatusPort = {
@@ -16,7 +16,7 @@ module RequestGameStatusPort = {
     | WaitingForOpponentJoin
     | InProgress
     | Finished(Game.finishedContext)
-  type t = (~userName: string, ~gameCode: string) => Promise.t<data>
+  type t = (~nickname: Nickname.t, ~gameCode: Game.Code.t) => Promise.t<data>
 }
 
 module GameMachine = {
@@ -48,14 +48,14 @@ module GameMachine = {
 
 type state =
   | Menu
-  | CreatingGame({userName: string})
-  | JoiningGame({userName: string, gameCode: string})
-  | Game({userName: string, gameCode: string, gameState: GameMachine.state})
+  | CreatingGame({nickname: Nickname.t})
+  | JoiningGame({nickname: Nickname.t, gameCode: Game.Code.t})
+  | Game({nickname: Nickname.t, gameCode: Game.Code.t, gameState: GameMachine.state})
   | Exiting
 type event =
-  | CreateGame({userName: string})
-  | OnCreateGameSuccess({gameCode: string})
-  | JoinGame({userName: string, gameCode: string})
+  | CreateGame({nickname: Nickname.t})
+  | OnCreateGameSuccess({gameCode: Game.Code.t})
+  | JoinGame({nickname: Nickname.t, gameCode: Game.Code.t})
   | OnJoinGameSuccess
   | GameEvent(GameMachine.event)
   | Exit
@@ -63,18 +63,18 @@ type event =
 let machine = FSM.make(~reducer=(~state, ~event) => {
   switch (state, event) {
   | (_, Exit) if state != Exiting => Exiting
-  | (Menu, CreateGame({userName})) => CreatingGame({userName: userName})
-  | (CreatingGame({userName}), OnCreateGameSuccess({gameCode})) =>
+  | (Menu, CreateGame({nickname})) => CreatingGame({nickname: nickname})
+  | (CreatingGame({nickname}), OnCreateGameSuccess({gameCode})) =>
     Game({
       gameCode: gameCode,
-      userName: userName,
+      nickname: nickname,
       gameState: GameMachine.machine->FSM.getInitialState,
     })
-  | (Menu, JoinGame({userName, gameCode})) => JoiningGame({userName: userName, gameCode: gameCode})
-  | (JoiningGame({gameCode, userName}), OnJoinGameSuccess) =>
+  | (Menu, JoinGame({nickname, gameCode})) => JoiningGame({nickname: nickname, gameCode: gameCode})
+  | (JoiningGame({gameCode, nickname}), OnJoinGameSuccess) =>
     Game({
       gameCode: gameCode,
-      userName: userName,
+      nickname: nickname,
       gameState: GameMachine.machine->FSM.getInitialState,
     })
   | (Game(gameContext), GameEvent(gameEvent)) =>
@@ -101,8 +101,8 @@ let make = (
   let service = machine->FSM.interpret
   let maybeGameStatusSyncIntervalIdRef = ref(None)
 
-  let syncGameStatus = (~gameCode, ~userName) => {
-    requestGameStatus(~gameCode, ~userName)
+  let syncGameStatus = (~gameCode, ~nickname) => {
+    requestGameStatus(~gameCode, ~nickname)
     ->Promise.thenResolve(data => {
       service->FSM.send(GameEvent(OnGameStatus(data)))
     })
@@ -118,33 +118,33 @@ let make = (
   let _ = service->FSM.subscribe(state => {
     switch state {
     | Game({gameState: Status(Finished(_))}) => stopGameStatusSync()
-    | Game({userName, gameCode}) =>
+    | Game({nickname, gameCode}) =>
       switch maybeGameStatusSyncIntervalIdRef.contents {
       | Some(_) => ()
       | None => {
-          syncGameStatus(~gameCode, ~userName)
+          syncGameStatus(~gameCode, ~nickname)
           maybeGameStatusSyncIntervalIdRef.contents = Some(Global.setInterval(() => {
-              syncGameStatus(~gameCode, ~userName)
+              syncGameStatus(~gameCode, ~nickname)
             }, 3000))
         }
       }
     | _ => stopGameStatusSync()
     }
     switch state {
-    | CreatingGame({userName}) =>
-      createGame(~userName)
+    | CreatingGame({nickname}) =>
+      createGame(~nickname)
       ->Promise.thenResolve(({CreateGamePort.gameCode: gameCode}) => {
         service->FSM.send(OnCreateGameSuccess({gameCode: gameCode}))
       })
       ->ignore
-    | JoiningGame({userName, gameCode}) =>
-      joinGame(~userName, ~gameCode)
+    | JoiningGame({nickname, gameCode}) =>
+      joinGame(~nickname, ~gameCode)
       ->Promise.thenResolve(() => {
         service->FSM.send(OnJoinGameSuccess)
       })
       ->ignore
-    | Game({gameState: Status(WaitingForOpponentMove({yourMove})), userName, gameCode}) =>
-      sendMove(~gameCode, ~userName, ~move=yourMove)->ignore
+    | Game({gameState: Status(WaitingForOpponentMove({yourMove})), nickname, gameCode}) =>
+      sendMove(~gameCode, ~nickname, ~move=yourMove)->ignore
     | Exiting =>
       Global.queueMicrotask(() => {
         service->FSM.stop

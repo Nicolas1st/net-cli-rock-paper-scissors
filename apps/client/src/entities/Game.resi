@@ -1,7 +1,7 @@
-module Move = {
+module Move: {
   type t = Rock | Scissors | Paper
 
-  let values = [Rock, Scissors, Paper]
+  let values: array<t>
 }
 
 type outcome = Draw | Win | Loss
@@ -12,10 +12,14 @@ type status =
   | WaitingForOpponentMove({yourMove: Move.t})
   | Finished(finishedContext)
 
-module Code = {
-  type t = string
+module Code: {
+  type t
 
-  let validate = (self: t) => {
-    self->Js.String2.trim !== ""
-  }
+  let fromString: string => option<t>
+
+  let unsafeFromString: string => t
+
+  let toString: t => string
+
+  let validate: string => bool
 }

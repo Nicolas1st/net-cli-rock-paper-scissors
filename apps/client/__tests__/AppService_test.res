@@ -1,5 +1,8 @@
 open Ava
 
+let defaultGameCode = Game.Code.fromString("1234")->Belt.Option.getExn
+let defaultNickname = Nickname.fromString("Dmitry")->Belt.Option.getExn
+
 asyncTest("Successfully create game and start waiting for player", t => {
   t->Ava.ExecutionContext.plan(9)
 
@@ -7,19 +10,19 @@ asyncTest("Successfully create game and start waiting for player", t => {
 
   Promise.make((resolve, _) => {
     let service = AppService.make(
-      ~createGame=(~userName) => {
-        t->Assert.deepEqual(userName, "Dmitry", ())
-        Promise.resolve({AppService.CreateGamePort.gameCode: "1234"})
+      ~createGame=(~nickname) => {
+        t->Assert.deepEqual(nickname, defaultNickname, ())
+        Promise.resolve({AppService.CreateGamePort.gameCode: defaultGameCode})
       },
-      ~joinGame=(~userName as _, ~gameCode as _) => {
+      ~joinGame=(~nickname as _, ~gameCode as _) => {
         t->Assert.fail("Test CreateGameFlow")
       },
-      ~requestGameStatus=(~userName, ~gameCode) => {
-        t->Assert.deepEqual(userName, "Dmitry", ())
-        t->Assert.deepEqual(gameCode, "1234", ())
+      ~requestGameStatus=(~nickname, ~gameCode) => {
+        t->Assert.deepEqual(nickname, defaultNickname, ())
+        t->Assert.deepEqual(gameCode, gameCode, ())
         Promise.resolve(AppService.RequestGameStatusPort.WaitingForOpponentJoin)
       },
-      ~sendMove=(~userName as _, ~gameCode as _, ~move as _) => {
+      ~sendMove=(~nickname as _, ~gameCode as _, ~move as _) => {
         t->Assert.fail("Test CreateGameFlow")
       },
     )
@@ -28,7 +31,7 @@ asyncTest("Successfully create game and start waiting for player", t => {
       stepNumberRef.contents = stepNumberRef.contents + 1
       switch state {
       | CreatingGame(_) => {
-          t->Assert.deepEqual(state, AppService.CreatingGame({userName: "Dmitry"}), ())
+          t->Assert.deepEqual(state, AppService.CreatingGame({nickname: defaultNickname}), ())
           t->Assert.is(stepNumberRef.contents, 2, ())
         }
       | Game({gameState: Loading}) => t->Assert.is(stepNumberRef.contents, 3, ())
@@ -48,7 +51,7 @@ asyncTest("Successfully create game and start waiting for player", t => {
 
     t->Assert.deepEqual(service->FSM.getCurrentState, AppService.Menu, ())
 
-    service->FSM.send(AppService.CreateGame({userName: "Dmitry"}))
+    service->FSM.send(AppService.CreateGame({nickname: defaultNickname}))
   })
 })
 
@@ -59,22 +62,22 @@ asyncTest("Successfully join game and start playing", t => {
 
   Promise.make((resolve, _) => {
     let service = AppService.make(
-      ~createGame=(~userName as _) => {
+      ~createGame=(~nickname as _) => {
         t->Assert.fail("Test JoinGameFlow")
       },
-      ~joinGame=(~userName, ~gameCode) => {
-        t->Assert.deepEqual(userName, "Dmitry", ())
-        t->Assert.deepEqual(gameCode, "1234", ())
+      ~joinGame=(~nickname, ~gameCode) => {
+        t->Assert.deepEqual(nickname, defaultNickname, ())
+        t->Assert.deepEqual(gameCode, defaultGameCode, ())
         Promise.resolve()
       },
-      ~requestGameStatus=(~userName, ~gameCode) => {
-        t->Assert.deepEqual(userName, "Dmitry", ())
-        t->Assert.deepEqual(gameCode, "1234", ())
+      ~requestGameStatus=(~nickname, ~gameCode) => {
+        t->Assert.deepEqual(nickname, defaultNickname, ())
+        t->Assert.deepEqual(gameCode, defaultGameCode, ())
         Promise.resolve(AppService.RequestGameStatusPort.InProgress)
       },
-      ~sendMove=(~userName, ~gameCode, ~move) => {
-        t->Assert.deepEqual(userName, "Dmitry", ())
-        t->Assert.deepEqual(gameCode, "1234", ())
+      ~sendMove=(~nickname, ~gameCode, ~move) => {
+        t->Assert.deepEqual(nickname, defaultNickname, ())
+        t->Assert.deepEqual(gameCode, defaultGameCode, ())
         t->Assert.deepEqual(move, Rock, ())
         Promise.resolve()
       },
@@ -84,7 +87,7 @@ asyncTest("Successfully join game and start playing", t => {
       stepNumberRef.contents = stepNumberRef.contents + 1
       switch state {
       | CreatingGame(_) => {
-          t->Assert.deepEqual(state, AppService.CreatingGame({userName: "Dmitry"}), ())
+          t->Assert.deepEqual(state, AppService.CreatingGame({nickname: defaultNickname}), ())
           t->Assert.is(stepNumberRef.contents, 2, ())
         }
       | Game({gameState: Loading}) => t->Assert.is(stepNumberRef.contents, 3, ())
@@ -128,6 +131,6 @@ asyncTest("Successfully join game and start playing", t => {
 
     t->Assert.deepEqual(service->FSM.getCurrentState, AppService.Menu, ())
 
-    service->FSM.send(AppService.JoinGame({userName: "Dmitry", gameCode: "1234"}))
+    service->FSM.send(AppService.JoinGame({nickname: defaultNickname, gameCode: defaultGameCode}))
   })
 })

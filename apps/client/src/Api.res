@@ -26,13 +26,26 @@ let apiCall = (
 }
 
 module Struct = {
+  let nickname = S.string()->S.transform(
+    ~constructor=string =>
+      switch string->Nickname.fromString {
+      | Some(nickname) => Ok(nickname)
+      | None => Error(`Invalid nickname. (${string})`)
+      },
+    ~destructor=value => value->Nickname.toString->Ok,
+    (),
+  )
+
   module Game = {
-    let code =
-      S.int()->S.transform(
-        ~constructor=int => int->Js.Int.toString->Ok,
-        ~destructor=value => value->Belt.Int.fromString->Belt.Option.getExn->Ok,
-        (),
-      )
+    let code = S.int()->S.transform(
+      ~constructor=int =>
+        switch int->Js.Int.toString->Game.Code.fromString {
+        | Some(gameCode) => Ok(gameCode)
+        | None => Error(`Invalid game code. (${int->Obj.magic})`)
+        },
+      ~destructor=value => value->Game.Code.toString->Belt.Int.fromString->Belt.Option.getExn->Ok,
+      (),
+    )
 
     let move = S.string()->S.transform(
       ~constructor=data => {
@@ -65,47 +78,49 @@ module Struct = {
 }
 
 module CreateGame = {
-  type body = {userName: string}
+  type body = {nickname: Nickname.t}
 
-  let call: AppService.CreateGamePort.t = (~userName) => {
-    apiCall(
-      ~path="/game",
-      ~method=#POST,
-      ~bodyStruct=S.record1(
-        ~fields=("userName", S.string()),
-        ~destructor=({userName}) => userName->Ok,
-        (),
-      ),
-      ~dataStruct=S.record1(
-        ~fields=("gameCode", Struct.Game.code),
-        ~constructor=gameCode => {AppService.CreateGamePort.gameCode: gameCode}->Ok,
-        (),
-      ),
-      ~body={userName: userName},
-    )
+  let bodyStruct = S.record1(
+    ~fields=("userName", Struct.nickname),
+    ~destructor=({nickname}) => nickname->Ok,
+    (),
+  )
+
+  let dataStruct = S.record1(
+    ~fields=("gameCode", Struct.Game.code),
+    ~constructor=gameCode => {AppService.CreateGamePort.gameCode: gameCode}->Ok,
+    (),
+  )
+
+  let call: AppService.CreateGamePort.t = (~nickname) => {
+    apiCall(~path="/game", ~method=#POST, ~bodyStruct, ~dataStruct, ~body={nickname: nickname})
   }
 }
 
 module JoinGame = {
-  type body = {userName: string, gameCode: string}
+  type body = {nickname: Nickname.t, gameCode: Game.Code.t}
 
-  let call: AppService.JoinGamePort.t = (~userName, ~gameCode) => {
+  let bodyStruct = S.record2(
+    ~fields=(("userName", Struct.nickname), ("gameCode", Struct.Game.code)),
+    ~destructor=({nickname, gameCode}) => (nickname, gameCode)->Ok,
+    (),
+  )
+
+  let dataStruct = S.literal(Unit)
+
+  let call: AppService.JoinGamePort.t = (~nickname, ~gameCode) => {
     apiCall(
       ~path="/game/connection",
       ~method=#POST,
-      ~bodyStruct=S.record2(
-        ~fields=(("userName", S.string()), ("gameCode", Struct.Game.code)),
-        ~destructor=({userName, gameCode}) => (userName, gameCode)->Ok,
-        (),
-      ),
-      ~dataStruct=S.literal(Unit),
-      ~body={userName: userName, gameCode: gameCode},
+      ~bodyStruct,
+      ~dataStruct,
+      ~body={nickname: nickname, gameCode: gameCode},
     )
   }
 }
 
 module RequestGameStatus = {
-  type body = {userName: string, gameCode: string}
+  type body = {nickname: Nickname.t, gameCode: Game.Code.t}
 
   type dataDiscriminant = [#waiting | #inProcess | #finished]
 
@@ -165,39 +180,45 @@ module RequestGameStatus = {
     }, ())
   }
 
-  let call: AppService.RequestGameStatusPort.t = (~userName, ~gameCode) => {
+  let bodyStruct = S.record2(
+    ~fields=(("userName", Struct.nickname), ("gameCode", Struct.Game.code)),
+    ~destructor=({nickname, gameCode}) => (nickname, gameCode)->Ok,
+    (),
+  )
+
+  let call: AppService.RequestGameStatusPort.t = (~nickname, ~gameCode) => {
     apiCall(
       ~path="/game/status",
       ~method=#POST,
-      ~bodyStruct=S.record2(
-        ~fields=(("userName", S.string()), ("gameCode", Struct.Game.code)),
-        ~destructor=({userName, gameCode}) => (userName, gameCode)->Ok,
-        (),
-      ),
+      ~bodyStruct,
       ~dataStruct,
-      ~body={userName: userName, gameCode: gameCode},
+      ~body={nickname: nickname, gameCode: gameCode},
     )
   }
 }
 
 module SendMove = {
-  type body = {userName: string, gameCode: string, move: Game.Move.t}
+  type body = {nickname: Nickname.t, gameCode: Game.Code.t, move: Game.Move.t}
 
-  let call: AppService.SendMovePort.t = (~userName, ~gameCode, ~move) => {
+  let bodyStruct = S.record3(
+    ~fields=(
+      ("userName", Struct.nickname),
+      ("gameCode", Struct.Game.code),
+      ("move", Struct.Game.move),
+    ),
+    ~destructor=({nickname, gameCode, move}) => (nickname, gameCode, move)->Ok,
+    (),
+  )
+
+  let dataStruct = S.literal(Unit)
+
+  let call: AppService.SendMovePort.t = (~nickname, ~gameCode, ~move) => {
     apiCall(
       ~path="/game/move",
       ~method=#POST,
-      ~bodyStruct=S.record3(
-        ~fields=(
-          ("userName", S.string()),
-          ("gameCode", Struct.Game.code),
-          ("move", Struct.Game.move),
-        ),
-        ~destructor=({userName, gameCode, move}) => (userName, gameCode, move)->Ok,
-        (),
-      ),
-      ~dataStruct=S.literal(Unit),
-      ~body={userName: userName, gameCode: gameCode, move: move},
+      ~bodyStruct,
+      ~dataStruct,
+      ~body={nickname: nickname, gameCode: gameCode, move: move},
     )
   }
 }

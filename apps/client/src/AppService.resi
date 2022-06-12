@@ -1,14 +1,14 @@
 module JoinGamePort: {
-  type t = (~userName: string, ~gameCode: string) => Promise.t<unit>
+  type t = (~nickname: Nickname.t, ~gameCode: Game.Code.t) => Promise.t<unit>
 }
 
 module CreateGamePort: {
-  type data = {gameCode: string}
-  type t = (~userName: string) => Promise.t<data>
+  type data = {gameCode: Game.Code.t}
+  type t = (~nickname: Nickname.t) => Promise.t<data>
 }
 
 module SendMovePort: {
-  type t = (~userName: string, ~gameCode: string, ~move: Game.Move.t) => Promise.t<unit>
+  type t = (~nickname: Nickname.t, ~gameCode: Game.Code.t, ~move: Game.Move.t) => Promise.t<unit>
 }
 
 module RequestGameStatusPort: {
@@ -16,7 +16,7 @@ module RequestGameStatusPort: {
     | WaitingForOpponentJoin
     | InProgress
     | Finished(Game.finishedContext)
-  type t = (~userName: string, ~gameCode: string) => Promise.t<data>
+  type t = (~nickname: Nickname.t, ~gameCode: Game.Code.t) => Promise.t<data>
 }
 
 module GameMachine: {
@@ -28,14 +28,14 @@ module GameMachine: {
 
 type state =
   | Menu
-  | CreatingGame({userName: string})
-  | JoiningGame({userName: string, gameCode: string})
-  | Game({userName: string, gameCode: string, gameState: GameMachine.state})
+  | CreatingGame({nickname: Nickname.t})
+  | JoiningGame({nickname: Nickname.t, gameCode: Game.Code.t})
+  | Game({nickname: Nickname.t, gameCode: Game.Code.t, gameState: GameMachine.state})
   | Exiting
 type event =
-  | CreateGame({userName: string})
-  | OnCreateGameSuccess({gameCode: string})
-  | JoinGame({userName: string, gameCode: string})
+  | CreateGame({nickname: Nickname.t})
+  | OnCreateGameSuccess({gameCode: Game.Code.t})
+  | JoinGame({nickname: Nickname.t, gameCode: Game.Code.t})
   | OnJoinGameSuccess
   | GameEvent(GameMachine.event)
   | Exit
