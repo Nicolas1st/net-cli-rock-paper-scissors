@@ -1,3 +1,6 @@
-@val @scope("process.env") external _maybeApiHost: option<string> = "API_HOST"
+@val @scope("process") external env: {..} = "env"
 
-let apiHost = _maybeApiHost->Belt.Option.getWithDefault("http://localhost:8880")
+let apiHost =
+  env["API_HOST"]
+  ->S.parseWith(S.option(S.string())->S.default("http://localhost:8880"))
+  ->ResultX.getExnWithMessage
