@@ -167,26 +167,6 @@ let run = () => {
     ~requestGameStatus=Api.RequestGameStatus.call,
     ~sendMove=Api.SendMove.call,
   )
-  // let service = AppService.make(
-  //   ~createGame=(~userName as _) => {
-  //     Promise.resolve({AppService.CreateGamePort.gameCode: "1234"})
-  //   },
-  //   ~joinGame=(~userName as _, ~gameCode as _) => {
-  //     Promise.resolve()
-  //   },
-  //   ~requestGameStatus=(~userName as _, ~gameCode as _) => {
-  //     Promise.resolve(
-  //       AppService.RequestGameStatusPort.Finished({
-  //         outcome: Win,
-  //         yourMove: Rock,
-  //         opponentsMove: Scissors,
-  //       }),
-  //     )
-  //   },
-  //   ~sendMove=(~userName as _, ~gameCode as _, ~move as _) => {
-  //     Promise.resolve()
-  //   },
-  // )
   let render = state' =>
     renderer(state')
     ->Promise.thenResolve(answer => {
