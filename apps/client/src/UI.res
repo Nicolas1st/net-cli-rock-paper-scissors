@@ -25,62 +25,39 @@ type _questionType = [
   | #editor
 ]
 
-module Confirm = {
-  module Question = {
-    type t = {
-      @as("type")
-      questionType: _questionType,
-      name: string,
-      message: string,
-    }
-  }
-
-  @module("inquirer")
-  external _prompt: array<Question.t> => Promise.t<Js.Dict.t<bool>> = "prompt"
-
-  let prompt = (~message) =>
-    _prompt([
-      {
-        questionType: #confirm,
-        message: message,
-        name: _promptName,
-      },
-    ])->Promise.thenResolve(answer => {
-      answer->Js.Dict.unsafeGet(_promptName)
-    })
-}
-
 module Input = {
   module Question = {
+    module ValidateResult = {
+      type t = bool
+      external error: string => t = "%identity"
+    }
     type t = {
       @as("type")
       questionType: _questionType,
       name: string,
       message: string,
-      validate: option<string => result<unit, string>>,
+      validate: string => ValidateResult.t,
     }
   }
 
   @module("inquirer")
   external _prompt: array<Question.t> => Promise.t<Js.Dict.t<string>> = "prompt"
 
-  let prompt = (~message, ~validate as maybeValidate=?, ()) =>
+  let prompt = (~message, ~parser) =>
     _prompt([
       {
         questionType: #input,
         message: message,
         name: _promptName,
-        validate: maybeValidate->Belt.Option.map(validate => {
-          input => {
-            switch validate(input) {
-            | Ok() => Obj.magic(true)
-            | Error(message) => Obj.magic(message)
-            }
+        validate: input => {
+          switch parser(input) {
+          | Ok(_) => true
+          | Error(message) => Question.ValidateResult.error(message)
           }
-        }),
+        },
       },
     ])->Promise.thenResolve(answer => {
-      answer->Js.Dict.unsafeGet(_promptName)
+      answer->Js.Dict.unsafeGet(_promptName)->parser->ResultX.getExnWithMessage
     })
 }
 

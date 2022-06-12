@@ -9,17 +9,12 @@ module ManuRenderer = {
   open UI.List
 
   let promptNickname = () => {
-    UI.Input.prompt(
-      ~message="What's your nickname?",
-      ~validate=value => {
-        if value->Nickname.validate {
-          Ok()
-        } else {
-          Error("Nickname is invalid")
-        }
-      },
-      (),
-    )
+    UI.Input.prompt(~message="What's your nickname?", ~parser=value => {
+      switch value->Nickname.fromString {
+      | Some(nickname) => Ok(nickname)
+      | None => Error("Nickname is invalid")
+      }
+    })
   }
 
   let promptGameCode = () => {
@@ -28,14 +23,12 @@ module ManuRenderer = {
         "Enter a code of the game you want to join.",
         "(Ask it from the creator of the game)\n",
       ]->UI.MultilineText.make,
-      ~validate=value => {
-        if value->Game.Code.validate {
-          Ok()
-        } else {
-          Error("Game code is invalid")
+      ~parser=value => {
+        switch value->Game.Code.fromString {
+        | Some(gameCode) => Ok(gameCode)
+        | None => Error("Game code is invalid")
         }
       },
-      (),
     )
   }
 
@@ -52,7 +45,7 @@ module ManuRenderer = {
       | #createGame =>
         promptNickname()->Promise.thenResolve(nickname => Some(
           AppService.CreateGame({
-            nickname: nickname->Nickname.unsafeFromString,
+            nickname: nickname,
           }),
         ))
       | #joinGame =>
@@ -60,8 +53,8 @@ module ManuRenderer = {
           promptGameCode()->Promise.thenResolve(gameCode => {
             Some(
               AppService.JoinGame({
-                nickname: nickname->Nickname.unsafeFromString,
-                gameCode: gameCode->Game.Code.unsafeFromString,
+                nickname: nickname,
+                gameCode: gameCode,
               }),
             )
           })
