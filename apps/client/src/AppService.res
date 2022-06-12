@@ -34,7 +34,6 @@ module GameMachine = {
 
   let machine = FSM.make(~reducer=(~state, ~event) => {
     switch (state, event) {
-    | (Status(ReadyToPlay), OnGameStatus(InProgress))
     | (Status(WaitingForOpponentMove(_)), OnGameStatus(InProgress)) => state
     | (Status(ReadyToPlay), SendMove(move)) => Status(WaitingForOpponentMove({yourMove: move}))
     | (_, OnGameStatus(gameStatusData)) =>
