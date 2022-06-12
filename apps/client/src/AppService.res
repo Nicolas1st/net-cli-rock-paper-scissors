@@ -25,13 +25,6 @@ module GameMachine = {
     | Status(Game.status)
   type event = OnGameStatus(RequestGameStatusPort.data) | SendMove(Game.Move.t)
 
-  let remoteGameStatusToLocal = (remoteGameStatus: RequestGameStatusPort.data): Game.status =>
-    switch remoteGameStatus {
-    | WaitingForOpponentJoin => WaitingForOpponentJoin
-    | InProgress => ReadyToPlay
-    | Finished(context) => Finished(context)
-    }
-
   let machine = FSM.make(~reducer=(~state, ~event) => {
     switch (state, event) {
     | (Status(WaitingForOpponentMove(_)), OnGameStatus(InProgress)) => state
