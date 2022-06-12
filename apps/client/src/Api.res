@@ -12,12 +12,17 @@ let apiCall = (
     ->ResultX.getExnWithMessage
     ->Obj.magic,
   }
-  Undici.Request.call(~url=`${Env.apiHost}${path}`, ~options, ())
+  Undici.Request.call(~url=`${Env.apiHost}${path}`, ~options)
   ->Promise.then(response => {
-    if response.headers.contentLength->Belt.Int.fromString->Belt.Option.getWithDefault(0) === 0 {
+    let contentLength =
+      response.headers
+      ->Js.Dict.get("content-length")
+      ->Belt.Option.flatMap(Belt.Int.fromString)
+      ->Belt.Option.getWithDefault(0)
+    if contentLength === 0 {
       Promise.resolve(%raw(`undefined`))
     } else {
-      response.body.json(.)
+      response.body->Undici.Response.Body.json
     }
   })
   ->Promise.thenResolve(unknown => {
