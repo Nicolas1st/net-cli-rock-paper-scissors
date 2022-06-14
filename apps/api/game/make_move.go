@@ -37,5 +37,7 @@ func (s *gameStorer) MakeMove(gameCode uint, playerName string, move Move) error
 		game.Status = Finished
 	}
 
+	game.UpdateLastModifiedTime()
+
 	return nil
 }

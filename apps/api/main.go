@@ -23,8 +23,9 @@ func main() {
 	gameStorer := game.NewGameStorer()
 	go func() {
 		for {
-			time.Sleep(time.Minute)
-			gameStorer.RemoveFinishedGames()
+			removeAbandonedGamesPeriod := time.Minute
+			time.Sleep(removeAbandonedGamesPeriod)
+			gameStorer.RemoveAbandonedGames(removeAbandonedGamesPeriod)
 		}
 	}()
 
