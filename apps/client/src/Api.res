@@ -52,33 +52,17 @@ module Struct = {
       (),
     )
 
-    let move = S.string()->S.transform(
-      ~constructor=data => {
-        switch data {
-        | "rock" => Game.Move.Rock->Ok
-        | "paper" => Paper->Ok
-        | "scissors" => Scissors->Ok
-        | unknownData => Error(`The provided move "${unknownData}" is unknown`)
-        }
-      },
-      ~destructor=value => {
-        switch value {
-        | Rock => "rock"
-        | Paper => "paper"
-        | Scissors => "scissors"
-        }->Ok
-      },
-      (),
-    )
+    let move = S.union([
+      S.literalVariant(String("rock"), Game.Move.Rock),
+      S.literalVariant(String("paper"), Game.Move.Paper),
+      S.literalVariant(String("scissors"), Game.Move.Scissors),
+    ])
 
-    let outcome = S.string()->S.transform(~constructor=value => {
-      switch value {
-      | "win" => Game.Win->Ok
-      | "draw" => Draw->Ok
-      | "loss" => Loss->Ok
-      | unknownValue => Error(`The provided outcome "${unknownValue}" is unknown`)
-      }
-    }, ())
+    let outcome = S.union([
+      S.literalVariant(String("win"), Game.Win),
+      S.literalVariant(String("draw"), Game.Draw),
+      S.literalVariant(String("loss"), Game.Loss),
+    ])
   }
 }
 
@@ -127,17 +111,7 @@ module JoinGame = {
 module RequestGameStatus = {
   type body = {nickname: Nickname.t, gameCode: Game.Code.t}
 
-  type dataDiscriminant = [#waiting | #inProcess | #finished]
-
   let dataStruct = {
-    let discriminantStruct =
-      S.record1(~fields=("status", S.string()->S.transform(~constructor=value => {
-            switch Obj.magic(value) {
-            | #...dataDiscriminant as dataDiscriminant => dataDiscriminant->Ok
-            | unknownValue =>
-              Error(`The provided status type "${unknownValue->Obj.magic}" is unknown`)
-            }
-          }, ())), ~constructor=dataDiscriminant => dataDiscriminant->Ok, ())->S.Record.strip
     let waitingStruct = S.record1(
       ~fields=("status", S.literal(String("waiting"))),
       ~constructor=_ => AppService.RequestGameStatusPort.WaitingForOpponentJoin->Ok,
@@ -172,17 +146,7 @@ module RequestGameStatus = {
       ~constructor=((_, finishedContext)) => finishedContext->Ok,
       (),
     )
-    S.dynamic(~constructor=unknown => {
-      unknown
-      ->S.parseWith(discriminantStruct)
-      ->Belt.Result.flatMap(discriminant => {
-        switch discriminant {
-        | #waiting => waitingStruct
-        | #inProcess => inProcessStruct
-        | #finished => finishedStruct
-        }->Ok
-      })
-    }, ())
+    S.union([waitingStruct, inProcessStruct, finishedStruct])
   }
 
   let bodyStruct = S.record2(
