@@ -7,10 +7,7 @@ let apiCall = (
 ): Promise.t<'data> => {
   let options: Undici.Request.options = {
     method: method,
-    body: body
-    ->S.serializeWith(bodyStruct->S.json->Obj.magic)
-    ->ResultX.getExnWithMessage
-    ->Obj.magic,
+    body: body->S.serializeWith(bodyStruct->S.json->Obj.magic)->S.Result.getExn->Obj.magic,
   }
   Undici.Request.call(~url=`${Env.apiHost}${path}`, ~options)
   ->Promise.then(response => {
@@ -26,7 +23,7 @@ let apiCall = (
     }
   })
   ->Promise.thenResolve(unknown => {
-    unknown->S.parseWith(dataStruct)->ResultX.getExnWithMessage
+    unknown->S.parseWith(dataStruct)->S.Result.getExn
   })
 }
 

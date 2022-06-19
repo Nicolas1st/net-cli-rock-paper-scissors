@@ -57,7 +57,7 @@ module Input = {
         },
       },
     ])->Promise.thenResolve(answer => {
-      answer->Js.Dict.unsafeGet(_promptName)->parser->ResultX.getExnWithMessage
+      answer->Js.Dict.unsafeGet(_promptName)->parser->Belt.Result.getExn
     })
 }
 
