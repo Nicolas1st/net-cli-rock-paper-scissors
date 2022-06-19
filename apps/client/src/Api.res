@@ -67,13 +67,7 @@ module Struct = {
 }
 
 module CreateGame = {
-  type body = {nickname: Nickname.t}
-
-  let bodyStruct =
-    S.record1(. ("userName", Struct.nickname))->S.transform(
-      ~serializer=({nickname}) => nickname->Ok,
-      (),
-    )
+  let bodyStruct = S.record1(. ("userName", Struct.nickname))
 
   let dataStruct =
     S.record1(. ("gameCode", Struct.Game.code))->S.transform(
@@ -82,18 +76,12 @@ module CreateGame = {
     )
 
   let call: AppService.CreateGamePort.t = (~nickname) => {
-    apiCall(~path="/game", ~method=#POST, ~bodyStruct, ~dataStruct, ~body={nickname: nickname})
+    apiCall(~path="/game", ~method=#POST, ~bodyStruct, ~dataStruct, ~body=nickname)
   }
 }
 
 module JoinGame = {
-  type body = {nickname: Nickname.t, gameCode: Game.Code.t}
-
-  let bodyStruct =
-    S.record2(.
-      ("userName", Struct.nickname),
-      ("gameCode", Struct.Game.code),
-    )->S.transform(~serializer=({nickname, gameCode}) => (nickname, gameCode)->Ok, ())
+  let bodyStruct = S.record2(. ("userName", Struct.nickname), ("gameCode", Struct.Game.code))
 
   let dataStruct = S.literalUnit(EmptyOption)
 
@@ -103,14 +91,12 @@ module JoinGame = {
       ~method=#POST,
       ~bodyStruct,
       ~dataStruct,
-      ~body={nickname: nickname, gameCode: gameCode},
+      ~body=(nickname, gameCode),
     )
   }
 }
 
 module RequestGameStatus = {
-  type body = {nickname: Nickname.t, gameCode: Game.Code.t}
-
   let dataStruct = {
     let waitingStruct =
       S.record1(. ("status", S.literalUnit(String("waiting"))))->S.transform(
@@ -143,11 +129,7 @@ module RequestGameStatus = {
     S.union([waitingStruct, inProcessStruct, finishedStruct])
   }
 
-  let bodyStruct =
-    S.record2(.
-      ("userName", Struct.nickname),
-      ("gameCode", Struct.Game.code),
-    )->S.transform(~serializer=({nickname, gameCode}) => (nickname, gameCode)->Ok, ())
+  let bodyStruct = S.record2(. ("userName", Struct.nickname), ("gameCode", Struct.Game.code))
 
   let call: AppService.RequestGameStatusPort.t = (~nickname, ~gameCode) => {
     apiCall(
@@ -155,20 +137,17 @@ module RequestGameStatus = {
       ~method=#POST,
       ~bodyStruct,
       ~dataStruct,
-      ~body={nickname: nickname, gameCode: gameCode},
+      ~body=(nickname, gameCode),
     )
   }
 }
 
 module SendMove = {
-  type body = {nickname: Nickname.t, gameCode: Game.Code.t, move: Game.Move.t}
-
-  let bodyStruct =
-    S.record3(.
-      ("userName", Struct.nickname),
-      ("gameCode", Struct.Game.code),
-      ("move", Struct.Game.move),
-    )->S.transform(~serializer=({nickname, gameCode, move}) => (nickname, gameCode, move)->Ok, ())
+  let bodyStruct = S.record3(.
+    ("userName", Struct.nickname),
+    ("gameCode", Struct.Game.code),
+    ("move", Struct.Game.move),
+  )
 
   let dataStruct = S.literalUnit(EmptyOption)
 
@@ -178,7 +157,7 @@ module SendMove = {
       ~method=#POST,
       ~bodyStruct,
       ~dataStruct,
-      ~body={nickname: nickname, gameCode: gameCode, move: move},
+      ~body=(nickname, gameCode, move),
     )
   }
 }
