@@ -28,24 +28,21 @@ let apiCall = (
 }
 
 module Struct = {
-  let nickname = S.string()->S.transform(
-    ~parser=string =>
-      switch string->Nickname.fromString {
-      | Some(nickname) => Ok(nickname)
-      | None => Error(`Invalid nickname. (${string})`)
-      },
-    ~serializer=value => value->Nickname.toString->Ok,
-    (),
-  )
+  let nickname = S.string()->S.transform(~parser=string =>
+    switch string->Nickname.fromString {
+    | Some(nickname) => nickname
+    | None => S.Error.raise(`Invalid nickname. (${string})`)
+    }
+  , ~serializer=Nickname.toString, ())
 
   module Game = {
     let code = S.int()->S.transform(
       ~parser=int =>
         switch int->Js.Int.toString->Game.Code.fromString {
-        | Some(gameCode) => Ok(gameCode)
-        | None => Error(`Invalid game code. (${int->Obj.magic})`)
+        | Some(gameCode) => gameCode
+        | None => S.Error.raise(`Invalid game code. (${int->Obj.magic})`)
         },
-      ~serializer=value => value->Game.Code.toString->Belt.Int.fromString->Belt.Option.getExn->Ok,
+      ~serializer=value => value->Game.Code.toString->Belt.Int.fromString->Belt.Option.getExn,
       (),
     )
 
@@ -68,7 +65,7 @@ module CreateGame = {
 
   let dataStruct =
     S.record1(. ("gameCode", Struct.Game.code))->S.transform(
-      ~parser=gameCode => {AppService.CreateGamePort.gameCode: gameCode}->Ok,
+      ~parser=gameCode => {AppService.CreateGamePort.gameCode: gameCode},
       (),
     )
 
@@ -80,7 +77,7 @@ module CreateGame = {
 module JoinGame = {
   let bodyStruct = S.record2(. ("userName", Struct.nickname), ("gameCode", Struct.Game.code))
 
-  let dataStruct = S.literalUnit(EmptyOption)
+  let dataStruct = S.literal(EmptyOption)
 
   let call: AppService.JoinGamePort.t = (~nickname, ~gameCode) => {
     apiCall(
@@ -95,19 +92,17 @@ module JoinGame = {
 
 module RequestGameStatus = {
   let dataStruct = {
-    let waitingStruct =
-      S.record1(. ("status", S.literalUnit(String("waiting"))))->S.transform(
-        ~parser=() => AppService.RequestGameStatusPort.WaitingForOpponentJoin->Ok,
-        (),
-      )
-    let inProcessStruct =
-      S.record1(. ("status", S.literalUnit(String("inProcess"))))->S.transform(
-        ~parser=() => AppService.RequestGameStatusPort.InProgress->Ok,
-        (),
-      )
+    let waitingStruct = S.record1(. (
+      "status",
+      S.literalVariant(String("waiting"), AppService.RequestGameStatusPort.WaitingForOpponentJoin),
+    ))
+    let inProcessStruct = S.record1(. (
+      "status",
+      S.literalVariant(String("inProcess"), AppService.RequestGameStatusPort.InProgress),
+    ))
     let finishedStruct =
       S.record2(.
-        ("status", S.literalUnit(String("finished"))),
+        ("status", S.literalVariant(String("finished"), ())),
         (
           "gameResult",
           S.record3(.
@@ -116,13 +111,17 @@ module RequestGameStatus = {
             ("opponentsMove", Struct.Game.move),
           ),
         ),
-      )->S.transform(~parser=(((), (outcome, yourMove, opponentsMove))) =>
-        AppService.RequestGameStatusPort.Finished({
+      )->S.transform(
+        ~parser=((
+          (),
+          (outcome, yourMove, opponentsMove),
+        )) => AppService.RequestGameStatusPort.Finished({
           outcome: outcome,
           yourMove: yourMove,
           opponentsMove: opponentsMove,
-        })->Ok
-      , ())
+        }),
+        (),
+      )
     S.union([waitingStruct, inProcessStruct, finishedStruct])
   }
 
@@ -146,7 +145,7 @@ module SendMove = {
     ("move", Struct.Game.move),
   )
 
-  let dataStruct = S.literalUnit(EmptyOption)
+  let dataStruct = S.literal(EmptyOption)
 
   let call: AppService.SendMovePort.t = (~nickname, ~gameCode, ~move) => {
     apiCall(
