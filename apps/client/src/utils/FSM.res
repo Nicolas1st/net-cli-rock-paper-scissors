@@ -20,8 +20,8 @@ type service<'state, 'event> = {
 }
 
 let make = (~reducer, ~initialState) => {
-  reducer: reducer,
-  initialState: initialState,
+  reducer,
+  initialState,
 }
 
 let transition = (machine, ~state, ~event) => {

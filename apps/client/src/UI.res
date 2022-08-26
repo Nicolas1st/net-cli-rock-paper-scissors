@@ -47,7 +47,7 @@ module Input = {
     _prompt([
       {
         questionType: #input,
-        message: message,
+        message,
         name: _promptName,
         validate: input => {
           switch parser(input) {
@@ -69,8 +69,8 @@ module List = {
     }
 
     let make = (~name, ~value) => {
-      name: name,
-      value: value,
+      name,
+      value,
     }
   }
 
@@ -91,9 +91,9 @@ module List = {
     _prompt([
       {
         questionType: #list,
-        message: message,
+        message,
         name: _promptName,
-        choices: choices,
+        choices,
       },
     ])->Promise.thenResolve(answer => {
       answer->Js.Dict.unsafeGet(_promptName)

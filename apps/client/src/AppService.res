@@ -66,15 +66,15 @@ let machine = FSM.make(~reducer=(~state, ~event) => {
   | (Menu, CreateGame({nickname})) => CreatingGame({nickname: nickname})
   | (CreatingGame({nickname}), OnCreateGameSuccess({gameCode})) =>
     Game({
-      gameCode: gameCode,
-      nickname: nickname,
+      gameCode,
+      nickname,
       gameState: GameMachine.machine->FSM.getInitialState,
     })
-  | (Menu, JoinGame({nickname, gameCode})) => JoiningGame({nickname: nickname, gameCode: gameCode})
+  | (Menu, JoinGame({nickname, gameCode})) => JoiningGame({nickname, gameCode})
   | (JoiningGame({gameCode, nickname}), OnJoinGameSuccess) =>
     Game({
-      gameCode: gameCode,
-      nickname: nickname,
+      gameCode,
+      nickname,
       gameState: GameMachine.machine->FSM.getInitialState,
     })
   | (Game(gameContext), GameEvent(gameEvent)) =>

@@ -6,7 +6,7 @@ let apiCall = (
   ~dataStruct: S.t<'data>,
 ): Promise.t<'data> => {
   let options: Undici.Request.options = {
-    method: method,
+    method,
     body: body->S.serializeWith(bodyStruct->S.json->Obj.magic)->S.Result.getExn->Obj.magic,
   }
   Undici.Request.call(~url=`${Env.apiHost}${path}`, ~options)
@@ -116,9 +116,9 @@ module RequestGameStatus = {
           (),
           (outcome, yourMove, opponentsMove),
         )) => AppService.RequestGameStatusPort.Finished({
-          outcome: outcome,
-          yourMove: yourMove,
-          opponentsMove: opponentsMove,
+          outcome,
+          yourMove,
+          opponentsMove,
         }),
         (),
       )

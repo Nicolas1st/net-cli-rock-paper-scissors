@@ -27,27 +27,32 @@ asyncTest("Successfully create game and start waiting for player", t => {
       },
     )
 
-    let _ = service->FSM.subscribe(state => {
-      stepNumberRef.contents = stepNumberRef.contents + 1
-      switch state {
-      | CreatingGame(_) => {
-          t->Assert.deepEqual(state, AppService.CreatingGame({nickname: defaultNickname}), ())
-          t->Assert.is(stepNumberRef.contents, 2, ())
-        }
-      | Game({gameState: Loading}) => t->Assert.is(stepNumberRef.contents, 3, ())
-      | Game({gameState: Status(WaitingForOpponentJoin)}) => {
-          t->Assert.is(stepNumberRef.contents, 4, ())
+    let _ = service->FSM.subscribe(
+      state => {
+        stepNumberRef.contents = stepNumberRef.contents + 1
+        switch state {
+        | CreatingGame(_) => {
+            t->Assert.deepEqual(state, AppService.CreatingGame({nickname: defaultNickname}), ())
+            t->Assert.is(stepNumberRef.contents, 2, ())
+          }
 
-          service->FSM.send(AppService.Exit)
-        }
-      | Exiting => {
-          t->Assert.is(stepNumberRef.contents, 5, ())
+        | Game({gameState: Loading}) => t->Assert.is(stepNumberRef.contents, 3, ())
+        | Game({gameState: Status(WaitingForOpponentJoin)}) => {
+            t->Assert.is(stepNumberRef.contents, 4, ())
 
-          resolve(. Obj.magic(""))
+            service->FSM.send(AppService.Exit)
+          }
+
+        | Exiting => {
+            t->Assert.is(stepNumberRef.contents, 5, ())
+
+            resolve(. Obj.magic(""))
+          }
+
+        | _ => ()
         }
-      | _ => ()
-      }
-    })
+      },
+    )
 
     t->Assert.deepEqual(service->FSM.getCurrentState, AppService.Menu, ())
 
@@ -84,51 +89,58 @@ asyncTest("Successfully join game and start playing", t => {
       },
     )
 
-    let _ = service->FSM.subscribe(state => {
-      stepNumberRef.contents = stepNumberRef.contents + 1
-      switch state {
-      | CreatingGame(_) => {
-          t->Assert.deepEqual(state, AppService.CreatingGame({nickname: defaultNickname}), ())
-          t->Assert.is(stepNumberRef.contents, 2, ())
-        }
-      | Game({gameState: Loading}) => t->Assert.is(stepNumberRef.contents, 3, ())
-      | Game({gameState: Status(ReadyToPlay)}) => {
-          t->Assert.is(stepNumberRef.contents, 4, ())
+    let _ = service->FSM.subscribe(
+      state => {
+        stepNumberRef.contents = stepNumberRef.contents + 1
+        switch state {
+        | CreatingGame(_) => {
+            t->Assert.deepEqual(state, AppService.CreatingGame({nickname: defaultNickname}), ())
+            t->Assert.is(stepNumberRef.contents, 2, ())
+          }
 
-          service->FSM.send(AppService.GameEvent(SendMove(Rock)))
-        }
-      | Game({gameState: Status(WaitingForOpponentMove({yourMove}))}) => {
-          t->Assert.deepEqual(yourMove, Rock, ())
-          t->Assert.is(stepNumberRef.contents, 5, ())
+        | Game({gameState: Loading}) => t->Assert.is(stepNumberRef.contents, 3, ())
+        | Game({gameState: Status(ReadyToPlay)}) => {
+            t->Assert.is(stepNumberRef.contents, 4, ())
 
-          service->FSM.send(
-            AppService.GameEvent(
-              OnGameStatus(
-                Finished({
-                  yourMove: Rock,
-                  opponentsMove: Scissors,
-                  outcome: Win,
-                }),
+            service->FSM.send(AppService.GameEvent(SendMove(Rock)))
+          }
+
+        | Game({gameState: Status(WaitingForOpponentMove({yourMove}))}) => {
+            t->Assert.deepEqual(yourMove, Rock, ())
+            t->Assert.is(stepNumberRef.contents, 5, ())
+
+            service->FSM.send(
+              AppService.GameEvent(
+                OnGameStatus(
+                  Finished({
+                    yourMove: Rock,
+                    opponentsMove: Scissors,
+                    outcome: Win,
+                  }),
+                ),
               ),
-            ),
-          )
-        }
-      | Game({gameState: Status(Finished({yourMove, opponentsMove, outcome}))}) => {
-          t->Assert.deepEqual(yourMove, Rock, ())
-          t->Assert.deepEqual(opponentsMove, Scissors, ())
-          t->Assert.deepEqual(outcome, Win, ())
-          t->Assert.is(stepNumberRef.contents, 6, ())
+            )
+          }
 
-          service->FSM.send(AppService.Exit)
-        }
-      | Exiting => {
-          t->Assert.is(stepNumberRef.contents, 7, ())
+        | Game({gameState: Status(Finished({yourMove, opponentsMove, outcome}))}) => {
+            t->Assert.deepEqual(yourMove, Rock, ())
+            t->Assert.deepEqual(opponentsMove, Scissors, ())
+            t->Assert.deepEqual(outcome, Win, ())
+            t->Assert.is(stepNumberRef.contents, 6, ())
 
-          resolve(. Obj.magic(""))
+            service->FSM.send(AppService.Exit)
+          }
+
+        | Exiting => {
+            t->Assert.is(stepNumberRef.contents, 7, ())
+
+            resolve(. Obj.magic(""))
+          }
+
+        | _ => ()
         }
-      | _ => ()
-      }
-    })
+      },
+    )
 
     t->Assert.deepEqual(service->FSM.getCurrentState, AppService.Menu, ())
 

@@ -17,12 +17,12 @@
   "dependencies": {
     "@ryyppy/rescript-promise": "2.1.0",
     "inquirer": "8.2.4",
-    "rescript": "9.1.4",
-    "rescript-struct": "0.23.0",
+    "rescript": "10.0.0",
+    "rescript-struct": "0.25.0",
     "undici": "5.4.0"
   },
   "devDependencies": {
-    "@dzakh/rescript-ava": "0.1.2",
-    "ava": "4.3.1"
+    "@dzakh/rescript-ava": "0.2.0",
+    "ava": "4.3.3"
   }
 }

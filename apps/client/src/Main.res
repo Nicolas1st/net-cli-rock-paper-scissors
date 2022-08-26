@@ -50,14 +50,16 @@ module ManuRenderer = {
         ))
       | #joinGame =>
         promptNickname()->Promise.then(nickname => {
-          promptGameCode()->Promise.thenResolve(gameCode => {
-            Some(
-              AppService.JoinGame({
-                nickname: nickname,
-                gameCode: gameCode,
-              }),
-            )
-          })
+          promptGameCode()->Promise.thenResolve(
+            gameCode => {
+              Some(
+                AppService.JoinGame({
+                  nickname,
+                  gameCode,
+                }),
+              )
+            },
+          )
         })
       | #exit => Some(AppService.Exit)->Promise.resolve
       }
