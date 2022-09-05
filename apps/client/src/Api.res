@@ -61,10 +61,10 @@ module Struct = {
 }
 
 module CreateGame = {
-  let bodyStruct = S.record1(. ("userName", Struct.nickname))
+  let bodyStruct = S.object1(. ("userName", Struct.nickname))
 
   let dataStruct =
-    S.record1(. ("gameCode", Struct.Game.code))->S.transform(
+    S.object1(. ("gameCode", Struct.Game.code))->S.transform(
       ~parser=gameCode => {AppService.CreateGamePort.gameCode: gameCode},
       (),
     )
@@ -75,7 +75,7 @@ module CreateGame = {
 }
 
 module JoinGame = {
-  let bodyStruct = S.record2(. ("userName", Struct.nickname), ("gameCode", Struct.Game.code))
+  let bodyStruct = S.object2(. ("userName", Struct.nickname), ("gameCode", Struct.Game.code))
 
   let dataStruct = S.literal(EmptyOption)
 
@@ -92,20 +92,20 @@ module JoinGame = {
 
 module RequestGameStatus = {
   let dataStruct = {
-    let waitingStruct = S.record1(. (
+    let waitingStruct = S.object1(. (
       "status",
       S.literalVariant(String("waiting"), AppService.RequestGameStatusPort.WaitingForOpponentJoin),
     ))
-    let inProcessStruct = S.record1(. (
+    let inProcessStruct = S.object1(. (
       "status",
       S.literalVariant(String("inProcess"), AppService.RequestGameStatusPort.InProgress),
     ))
     let finishedStruct =
-      S.record2(.
+      S.object2(.
         ("status", S.literalVariant(String("finished"), ())),
         (
           "gameResult",
-          S.record3(.
+          S.object3(.
             ("outcome", Struct.Game.outcome),
             ("yourMove", Struct.Game.move),
             ("opponentsMove", Struct.Game.move),
@@ -125,7 +125,7 @@ module RequestGameStatus = {
     S.union([waitingStruct, inProcessStruct, finishedStruct])
   }
 
-  let bodyStruct = S.record2(. ("userName", Struct.nickname), ("gameCode", Struct.Game.code))
+  let bodyStruct = S.object2(. ("userName", Struct.nickname), ("gameCode", Struct.Game.code))
 
   let call: AppService.RequestGameStatusPort.t = (~nickname, ~gameCode) => {
     apiCall(
@@ -139,7 +139,7 @@ module RequestGameStatus = {
 }
 
 module SendMove = {
-  let bodyStruct = S.record3(.
+  let bodyStruct = S.object3(.
     ("userName", Struct.nickname),
     ("gameCode", Struct.Game.code),
     ("move", Struct.Game.move),

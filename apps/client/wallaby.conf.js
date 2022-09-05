@@ -1,16 +1,16 @@
-const packageJson = require('./package.json');
+import fs from "fs";
 
-const { files: tests } = packageJson.ava;
+const packageJson = JSON.parse(fs.readFileSync("./package.json", "utf8"));
 
-module.exports = () => ({
-  files: [
-    'src/**/*.bs.js'
-  ],
-  tests,
+export default () => ({
+  files: ["package.json", "src/**/*.mjs"],
+  tests: packageJson.ava.files,
   env: {
-    type: 'node',
-    runner: 'node'
+    type: "node",
+    params: {
+      runner: "--experimental-vm-modules",
+    },
   },
   debug: false,
-  testFramework: 'ava',
+  testFramework: "ava",
 });

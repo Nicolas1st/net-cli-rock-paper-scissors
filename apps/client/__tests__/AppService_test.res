@@ -3,7 +3,7 @@ open Ava
 let defaultGameCode = Game.Code.fromString("1234")->Belt.Option.getExn
 let defaultNickname = Nickname.fromString("Dmitry")->Belt.Option.getExn
 
-asyncTest("Successfully create game and start waiting for player", t => {
+ava->asyncTest("Successfully create game and start waiting for player", t => {
   t->Ava.ExecutionContext.plan(9)
 
   let stepNumberRef = ref(1)
@@ -61,7 +61,7 @@ asyncTest("Successfully create game and start waiting for player", t => {
   })
 })
 
-asyncTest("Successfully join game and start playing", t => {
+ava->asyncTest("Successfully join game and start playing", t => {
   t->Ava.ExecutionContext.plan(17)
 
   let stepNumberRef = ref(1)

@@ -112,9 +112,8 @@ module GameStatusWaitingForOpponentMoveRenderer = {
 }
 
 module GameStatusReadyToPlayRenderer = {
-  open UI.List
-
-  let make = () =>
+  let make = () => {
+    open UI.List
     prompt(
       ~message="What's your move?",
       ~choices=Game.Move.values->Js.Array2.map(move =>
@@ -123,6 +122,7 @@ module GameStatusReadyToPlayRenderer = {
     )->Promise.thenResolve(answer => {
       Some(AppService.GameEvent(AppService.GameMachine.SendMove(answer)))
     })
+  }
 }
 
 module GameStatusFinishedRenderer = {
