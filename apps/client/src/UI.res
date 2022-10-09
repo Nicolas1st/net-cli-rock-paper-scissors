@@ -40,7 +40,7 @@ module Input = {
     }
   }
 
-  @module("inquirer")
+  @module("inquirer") @scope("default")
   external _prompt: array<Question.t> => Promise.t<Js.Dict.t<string>> = "prompt"
 
   let prompt = (~message, ~parser) =>
@@ -84,7 +84,7 @@ module List = {
     }
   }
 
-  @module("inquirer")
+  @module("inquirer") @scope("default")
   external _prompt: array<Question.t<'value>> => Promise.t<Js.Dict.t<'value>> = "prompt"
 
   let prompt = (~message, ~choices) =>
