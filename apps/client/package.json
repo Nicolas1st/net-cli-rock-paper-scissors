@@ -19,7 +19,8 @@
     "@ryyppy/rescript-promise": "2.1.0",
     "inquirer": "8.2.4",
     "rescript": "10.0.1",
-    "rescript-struct": "1.0.0",
+    "rescript-envsafe": "1.0.2",
+    "rescript-struct": "2.0.0",
     "undici": "5.4.0"
   },
   "devDependencies": {

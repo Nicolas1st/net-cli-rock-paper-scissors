@@ -1,6 +1,11 @@
-@val @scope("process") external env: {..} = "env"
+%%private(let envSafe = EnvSafe.make())
 
-let apiHost =
-  env["API_HOST"]
-  ->S.parseWith(S.option(S.string())->S.defaulted("http://localhost:8880"))
-  ->S.Result.getExn
+let apiUrl =
+  envSafe->EnvSafe.get(
+    ~name="API_URL",
+    ~struct=S.string()->S.String.url(),
+    ~devFallback="http://localhost:8880",
+    (),
+  )
+
+envSafe->EnvSafe.close()
