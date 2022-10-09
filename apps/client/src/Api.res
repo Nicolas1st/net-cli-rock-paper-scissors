@@ -1,7 +1,7 @@
 let apiCall = (
   ~path,
   ~method,
-  ~body: option<'body>=?,
+  ~body: 'body,
   ~bodyStruct: S.t<'body>,
   ~dataStruct: S.t<'data>,
 ): Promise.t<'data> => {
@@ -9,7 +9,7 @@ let apiCall = (
     method,
     body: body->S.serializeWith(bodyStruct->S.json->Obj.magic)->S.Result.getExn->Obj.magic,
   }
-  Undici.Request.call(~url=`${Env.apiHost}${path}`, ~options)
+  Undici.Request.call(~url=`${Env.apiUrl}${path}`, ~options)
   ->Promise.then(response => {
     let contentLength =
       response.headers
