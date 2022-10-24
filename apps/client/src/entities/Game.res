@@ -1,3 +1,5 @@
+open Stdlib
+
 module Move = {
   type t = Rock | Scissors | Paper
 
@@ -8,7 +10,7 @@ module Code = {
   type t = string
 
   let fromString = string => {
-    if string->Js.String2.trim !== "" {
+    if string->String.trim !== "" {
       Some(string)
     } else {
       None

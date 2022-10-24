@@ -1,7 +1,8 @@
 open Ava
+open Stdlib
 
-let defaultGameCode = Game.Code.fromString("1234")->Belt.Option.getExn
-let defaultNickname = Nickname.fromString("Dmitry")->Belt.Option.getExn
+let defaultGameCode = Game.Code.fromString("1234")->Option.getExn
+let defaultNickname = Nickname.fromString("Dmitry")->Option.getExn
 
 ava->asyncTest("Successfully create game and start waiting for player", t => {
   t->Ava.ExecutionContext.plan(9)

@@ -1,14 +1,16 @@
+open Stdlib
+
 @val external _clear: unit => unit = "console.clear"
 
 module MultilineText = {
   let make = strings => {
-    strings->Js.Array2.joinWith("\n")
+    strings->Array.joinWith("\n")
   }
 }
 
 let message = string => {
   _clear()
-  Js.log(string)
+  log(string)
 }
 
 let _promptName = "promptName"
@@ -41,7 +43,7 @@ module Input = {
   }
 
   @module("inquirer") @scope("default")
-  external _prompt: array<Question.t> => Promise.t<Js.Dict.t<string>> = "prompt"
+  external _prompt: array<Question.t> => Promise.t<Dict.t<string>> = "prompt"
 
   let prompt = (~message, ~parser) =>
     _prompt([
@@ -57,7 +59,7 @@ module Input = {
         },
       },
     ])->Promise.thenResolve(answer => {
-      answer->Js.Dict.unsafeGet(_promptName)->parser->Belt.Result.getExn
+      answer->Dict.unsafeGet(_promptName)->parser->Result.getExn
     })
 }
 
@@ -85,7 +87,7 @@ module List = {
   }
 
   @module("inquirer") @scope("default")
-  external _prompt: array<Question.t<'value>> => Promise.t<Js.Dict.t<'value>> = "prompt"
+  external _prompt: array<Question.t<'value>> => Promise.t<Dict.t<'value>> = "prompt"
 
   let prompt = (~message, ~choices) =>
     _prompt([
@@ -96,6 +98,6 @@ module List = {
         choices,
       },
     ])->Promise.thenResolve(answer => {
-      answer->Js.Dict.unsafeGet(_promptName)
+      answer->Dict.unsafeGet(_promptName)
     })
 }

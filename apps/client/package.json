@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run res:build",
+    "lint": "rescript-stdlib-cli lint",
     "res:build": "rescript build -with-deps",
     "res:dev": "rescript build -with-deps -w",
     "start": "node ./src/Main.mjs",
@@ -25,6 +26,7 @@
   },
   "devDependencies": {
     "@dzakh/rescript-ava": "0.4.0",
-    "ava": "4.3.3"
+    "ava": "4.3.3",
+    "rescript-stdlib-cli": "0.1.0"
   }
 }

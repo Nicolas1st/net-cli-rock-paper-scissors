@@ -1,3 +1,5 @@
+open Stdlib
+
 module Response = {
   module Body = {
     type t
@@ -6,7 +8,7 @@ module Response = {
     external json: t => Promise.t<S.unknown> = "json"
   }
 
-  type t = {body: Body.t, statusCode: int, headers: Js.Dict.t<string>}
+  type t = {body: Body.t, statusCode: int, headers: Dict.t<string>}
 }
 
 module Request = {

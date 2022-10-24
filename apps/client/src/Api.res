@@ -1,3 +1,5 @@
+open Stdlib
+
 let apiCall = (
   ~path,
   ~method,
@@ -13,9 +15,9 @@ let apiCall = (
   ->Promise.then(response => {
     let contentLength =
       response.headers
-      ->Js.Dict.get("content-length")
-      ->Belt.Option.flatMap(Belt.Int.fromString)
-      ->Belt.Option.getWithDefault(0)
+      ->Dict.get("content-length")
+      ->Option.flatMap(Int.fromString)
+      ->Option.getWithDefault(0)
     if contentLength === 0 {
       Promise.resolve(%raw(`undefined`))
     } else {
@@ -38,11 +40,11 @@ module Struct = {
   module Game = {
     let code = S.int()->S.transform(
       ~parser=int =>
-        switch int->Js.Int.toString->Game.Code.fromString {
+        switch int->Int.toString->Game.Code.fromString {
         | Some(gameCode) => gameCode
         | None => S.Error.raise(`Invalid game code. (${int->Obj.magic})`)
         },
-      ~serializer=value => value->Game.Code.toString->Belt.Int.fromString->Belt.Option.getExn,
+      ~serializer=value => value->Game.Code.toString->Int.fromString->Option.getExn,
       (),
     )
 

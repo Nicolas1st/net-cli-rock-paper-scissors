@@ -1,3 +1,5 @@
+open Stdlib
+
 let moveToText = (move: Game.Move.t) =>
   switch move {
   | Rock => `Rock 🪨`
@@ -116,7 +118,7 @@ module GameStatusReadyToPlayRenderer = {
     open UI.List
     prompt(
       ~message="What's your move?",
-      ~choices=Game.Move.values->Js.Array2.map(move =>
+      ~choices=Game.Move.values->Array.map(move =>
         Choice.make(~name=move->moveToText, ~value=move)
       ),
     )->Promise.thenResolve(answer => {
@@ -172,7 +174,7 @@ let run = () => {
   let render = state' =>
     renderer(state')
     ->Promise.thenResolve(answer => {
-      answer->Belt.Option.map(service->FSM.send)
+      answer->Option.map(service->FSM.send)
     })
     ->ignore
   let _ = service->FSM.subscribe(state => {
