@@ -4,7 +4,7 @@ open Stdlib
 let defaultGameCode = Game.Code.fromString("1234")->Option.getExn
 let defaultNickname = Nickname.fromString("Dmitry")->Option.getExn
 
-ava->asyncTest("Successfully create game and start waiting for player", t => {
+asyncTest("Successfully create game and start waiting for player", t => {
   t->Ava.ExecutionContext.plan(9)
 
   let stepNumberRef = ref(1)
@@ -62,7 +62,7 @@ ava->asyncTest("Successfully create game and start waiting for player", t => {
   })
 })
 
-ava->asyncTest("Successfully join game and start playing", t => {
+asyncTest("Successfully join game and start playing", t => {
   t->Ava.ExecutionContext.plan(17)
 
   let stepNumberRef = ref(1)
