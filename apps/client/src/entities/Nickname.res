@@ -1,5 +1,3 @@
-open Stdlib
-
 type t = string
 
 let fromString = string => {

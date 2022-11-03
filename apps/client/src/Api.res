@@ -1,5 +1,3 @@
-open Stdlib
-
 let apiCall = (
   ~path,
   ~method,

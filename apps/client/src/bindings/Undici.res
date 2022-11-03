@@ -1,5 +1,3 @@
-open Stdlib
-
 module Response = {
   module Body = {
     type t

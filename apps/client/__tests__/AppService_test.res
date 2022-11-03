@@ -1,5 +1,4 @@
 open Ava
-open Stdlib
 
 let defaultGameCode = Game.Code.fromString("1234")->Option.getExn
 let defaultNickname = Nickname.fromString("Dmitry")->Option.getExn

@@ -1,5 +1,3 @@
-open Stdlib
-
 let moveToText = (move: Game.Move.t) =>
   switch move {
   | Rock => `Rock 🪨`

@@ -1,12 +1,13 @@
 {
   "name": "client",
   "namespace": false,
-  "bsc-flags": ["-bs-no-version-header", "-bs-super-errors"],
+  "bsc-flags": ["-open Stdlib"],
   "bs-dev-dependencies": ["@dzakh/rescript-ava"],
   "bs-dependencies": [
     "rescript-struct",
     "rescript-envsafe",
-    "@ryyppy/rescript-promise"
+    "@ryyppy/rescript-promise",
+    "stdlib"
   ],
   "suffix": ".mjs",
   "package-specs": {
@@ -22,8 +23,5 @@
       "dir": "__tests__",
       "type": "dev"
     }
-  ],
-  "warnings": {
-    "number": "-44"
-  }
+  ]
 }

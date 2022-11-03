@@ -1,5 +1,3 @@
-open Stdlib
-
 module Move = {
   type t = Rock | Scissors | Paper
 

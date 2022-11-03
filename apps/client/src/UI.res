@@ -1,5 +1,3 @@
-open Stdlib
-
 @val external _clear: unit => unit = "console.clear"
 
 module MultilineText = {
