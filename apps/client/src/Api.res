@@ -61,21 +61,24 @@ module Struct = {
 }
 
 module CreateGame = {
-  let bodyStruct = S.object1(. ("userName", Struct.nickname))
+  let bodyStruct = S.object(o => {"nickname": o->S.field("userName", Struct.nickname)})
 
-  let dataStruct =
-    S.object1(. ("gameCode", Struct.Game.code))->S.transform(
-      ~parser=gameCode => {AppService.CreateGamePort.gameCode: gameCode},
-      (),
-    )
+  let dataStruct = S.object((o): AppService.CreateGamePort.data => {
+    gameCode: o->S.field("gameCode", Struct.Game.code),
+  })
 
   let call: AppService.CreateGamePort.t = (~nickname) => {
-    apiCall(~path="/game", ~method=#POST, ~bodyStruct, ~dataStruct, ~body=nickname)
+    apiCall(~path="/game", ~method=#POST, ~bodyStruct, ~dataStruct, ~body={"nickname": nickname})
   }
 }
 
 module JoinGame = {
-  let bodyStruct = S.object2(. ("userName", Struct.nickname), ("gameCode", Struct.Game.code))
+  let bodyStruct = S.object(o =>
+    {
+      "nickname": o->S.field("userName", Struct.nickname),
+      "gameCode": o->S.field("gameCode", Struct.Game.code),
+    }
+  )
 
   let dataStruct = S.literal(EmptyOption)
 
@@ -85,47 +88,43 @@ module JoinGame = {
       ~method=#POST,
       ~bodyStruct,
       ~dataStruct,
-      ~body=(nickname, gameCode),
+      ~body={
+        "gameCode": gameCode,
+        "nickname": nickname,
+      },
     )
   }
 }
 
 module RequestGameStatus = {
-  let dataStruct = {
-    let waitingStruct = S.object1(. (
-      "status",
-      S.literalVariant(String("waiting"), AppService.RequestGameStatusPort.WaitingForOpponentJoin),
-    ))
-    let inProcessStruct = S.object1(. (
-      "status",
-      S.literalVariant(String("inProcess"), AppService.RequestGameStatusPort.InProgress),
-    ))
-    let finishedStruct =
-      S.object2(.
-        ("status", S.literalVariant(String("finished"), ())),
-        (
-          "gameResult",
-          S.object3(.
-            ("outcome", Struct.Game.outcome),
-            ("yourMove", Struct.Game.move),
-            ("opponentsMove", Struct.Game.move),
-          ),
-        ),
-      )->S.transform(
-        ~parser=((
-          (),
-          (outcome, yourMove, opponentsMove),
-        )) => AppService.RequestGameStatusPort.Finished({
-          outcome,
-          yourMove,
-          opponentsMove,
-        }),
-        (),
-      )
-    S.union([waitingStruct, inProcessStruct, finishedStruct])
-  }
+  let bodyStruct = S.object(o =>
+    {
+      "nickname": o->S.field("userName", Struct.nickname),
+      "gameCode": o->S.field("gameCode", Struct.Game.code),
+    }
+  )
 
-  let bodyStruct = S.object2(. ("userName", Struct.nickname), ("gameCode", Struct.Game.code))
+  let dataStruct = S.union([
+    S.object(o => {
+      o->S.discriminant("status", S.literal(String("waiting")))
+      AppService.RequestGameStatusPort.WaitingForOpponentJoin
+    }),
+    S.object(o => {
+      o->S.discriminant("status", S.literal(String("inProcess")))
+      AppService.RequestGameStatusPort.InProgress
+    }),
+    S.object(o => {
+      o->S.discriminant("status", S.literal(String("finished")))
+      o->S.field(
+        "gameResult",
+        S.object(o => AppService.RequestGameStatusPort.Finished({
+          outcome: o->S.field("outcome", Struct.Game.outcome),
+          yourMove: o->S.field("yourMove", Struct.Game.move),
+          opponentsMove: o->S.field("opponentsMove", Struct.Game.move),
+        })),
+      )
+    }),
+  ])
 
   let call: AppService.RequestGameStatusPort.t = (~nickname, ~gameCode) => {
     apiCall(
@@ -133,16 +132,21 @@ module RequestGameStatus = {
       ~method=#POST,
       ~bodyStruct,
       ~dataStruct,
-      ~body=(nickname, gameCode),
+      ~body={
+        "gameCode": gameCode,
+        "nickname": nickname,
+      },
     )
   }
 }
 
 module SendMove = {
-  let bodyStruct = S.object3(.
-    ("userName", Struct.nickname),
-    ("gameCode", Struct.Game.code),
-    ("move", Struct.Game.move),
+  let bodyStruct = S.object(o =>
+    {
+      "nickname": o->S.field("userName", Struct.nickname),
+      "gameCode": o->S.field("gameCode", Struct.Game.code),
+      "move": o->S.field("move", Struct.Game.move),
+    }
   )
 
   let dataStruct = S.literal(EmptyOption)
@@ -153,7 +157,11 @@ module SendMove = {
       ~method=#POST,
       ~bodyStruct,
       ~dataStruct,
-      ~body=(nickname, gameCode, move),
+      ~body={
+        "gameCode": gameCode,
+        "nickname": nickname,
+        "move": move,
+      },
     )
   }
 }

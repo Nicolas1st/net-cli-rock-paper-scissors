@@ -1,7 +1,7 @@
 {
   "name": "client",
   "namespace": false,
-  "bsc-flags": ["-open Stdlib"],
+  "bsc-flags": ["-open Stdlib", "-open ReScriptStruct"],
   "bs-dev-dependencies": ["@dzakh/rescript-ava"],
   "bs-dependencies": [
     "rescript-struct",

@@ -19,15 +19,15 @@
   "dependencies": {
     "@ryyppy/rescript-promise": "2.1.0",
     "inquirer": "8.2.4",
-    "rescript": "10.0.1",
-    "rescript-envsafe": "1.0.2",
-    "rescript-struct": "2.0.0",
+    "rescript": "10.1.0",
+    "rescript-envsafe": "1.2.0",
+    "rescript-struct": "3.0.0",
     "stdlib": "file:stdlib",
-    "undici": "5.4.0"
+    "undici": "5.13.0"
   },
   "devDependencies": {
-    "@dzakh/rescript-ava": "1.0.0",
-    "ava": "5.0.1",
-    "rescript-stdlib-cli": "0.2.0"
+    "@dzakh/rescript-ava": "2.1.0",
+    "ava": "5.1.0",
+    "rescript-stdlib-cli": "0.3.2"
   }
 }

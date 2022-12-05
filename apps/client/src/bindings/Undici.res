@@ -3,7 +3,7 @@ module Response = {
     type t
 
     @send
-    external json: t => Promise.t<S.unknown> = "json"
+    external json: t => Promise.t<unknown> = "json"
   }
 
   type t = {body: Body.t, statusCode: int, headers: Dict.t<string>}
