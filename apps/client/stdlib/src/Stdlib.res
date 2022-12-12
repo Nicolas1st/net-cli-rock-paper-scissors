@@ -7,4 +7,8 @@ module Result = Belt.Result
 module Int = Belt.Int
 module Json = Js.Json
 
+module Promise = {
+  include Promise
+}
+
 let log = Js.log

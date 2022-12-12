@@ -4,6 +4,7 @@
     "dir": "src",
     "subdirs": true
   },
+  "bs-dependencies": ["@ryyppy/rescript-promise"],
   "package-specs": {
     "module": "es6",
     "in-source": true

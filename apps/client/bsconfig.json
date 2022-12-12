@@ -3,12 +3,7 @@
   "namespace": false,
   "bsc-flags": ["-open Stdlib", "-open ReScriptStruct"],
   "bs-dev-dependencies": ["@dzakh/rescript-ava"],
-  "bs-dependencies": [
-    "rescript-struct",
-    "rescript-envsafe",
-    "@ryyppy/rescript-promise",
-    "stdlib"
-  ],
+  "bs-dependencies": ["rescript-struct", "rescript-envsafe", "stdlib"],
   "suffix": ".bs.mjs",
   "package-specs": {
     "module": "es6",
