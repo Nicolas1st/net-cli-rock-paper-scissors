@@ -164,10 +164,10 @@ let renderer = (appState: AppService.state) => {
 
 let run = () => {
   let service = AppService.make(
-    ~createGame=Api.CreateGame.call,
-    ~joinGame=Api.JoinGame.call,
-    ~requestGameStatus=Api.RequestGameStatus.call,
-    ~sendMove=Api.SendMove.call,
+    ~createGame=Api.CreateGame.make(),
+    ~joinGame=Api.JoinGame.make(),
+    ~requestGameStatus=Api.RequestGameStatus.make(),
+    ~sendMove=Api.SendMove.make(),
   )
   let render = state' =>
     renderer(state')

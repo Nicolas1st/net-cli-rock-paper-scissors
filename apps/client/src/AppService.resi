@@ -1,29 +1,8 @@
-module JoinGamePort: {
-  type t = (~nickname: Nickname.t, ~gameCode: Game.Code.t) => Promise.t<unit>
-}
-
-module CreateGamePort: {
-  type data = {gameCode: Game.Code.t}
-  type t = (~nickname: Nickname.t) => Promise.t<data>
-}
-
-module SendMovePort: {
-  type t = (~nickname: Nickname.t, ~gameCode: Game.Code.t, ~move: Game.Move.t) => Promise.t<unit>
-}
-
-module RequestGameStatusPort: {
-  type data =
-    | WaitingForOpponentJoin
-    | InProgress
-    | Finished(Game.finishedContext)
-  type t = (~nickname: Nickname.t, ~gameCode: Game.Code.t) => Promise.t<data>
-}
-
 module GameMachine: {
   type state =
     | Loading
     | Status(Game.status)
-  type event = OnGameStatus(RequestGameStatusPort.data) | SendMove(Game.Move.t)
+  type event = OnGameStatus(Port.RequestGameStatus.data) | SendMove(Game.Move.t)
 }
 
 type state =
@@ -41,8 +20,8 @@ type event =
   | Exit
 
 let make: (
-  ~createGame: CreateGamePort.t,
-  ~joinGame: JoinGamePort.t,
-  ~requestGameStatus: RequestGameStatusPort.t,
-  ~sendMove: SendMovePort.t,
+  ~createGame: Port.CreateGame.t,
+  ~joinGame: Port.JoinGame.t,
+  ~requestGameStatus: Port.RequestGameStatus.t,
+  ~sendMove: Port.SendMove.t,
 ) => FSM.service<state, event>

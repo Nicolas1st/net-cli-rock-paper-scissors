@@ -1,30 +1,27 @@
-let apiCall = (
-  ~path,
-  ~method,
-  ~body: 'body,
-  ~bodyStruct: S.t<'body>,
-  ~dataStruct: S.t<'data>,
-): Promise.t<'data> => {
-  let options: Undici.Request.options = {
-    method,
-    body: body->S.serializeWith(bodyStruct->S.json->Obj.magic)->S.Result.getExn->Obj.magic,
-  }
-  Undici.Request.call(~url=`${Env.apiUrl}${path}`, ~options)
-  ->Promise.then(response => {
-    let contentLength =
-      response.headers
-      ->Dict.get("content-length")
-      ->Option.flatMap(Int.fromString)
-      ->Option.getWithDefault(0)
-    if contentLength === 0 {
-      Promise.resolve(%raw(`undefined`))
-    } else {
-      response.body->Undici.Response.Body.json
+module Http = {
+  let make = (~path, ~method, ~inputStruct: S.t<'input>, ~dataStruct: S.t<'data>) =>
+    (. input: 'input): Promise.t<'data> => {
+      let options: Undici.Request.options = {
+        method,
+        body: input->S.serializeWith(inputStruct->S.json->Obj.magic)->S.Result.getExn->Obj.magic,
+      }
+      Undici.Request.call(~url=`${Env.apiUrl}${path}`, ~options)
+      ->Promise.then(response => {
+        let contentLength =
+          response.headers
+          ->Dict.get("content-length")
+          ->Option.flatMap(Int.fromString)
+          ->Option.getWithDefault(0)
+        if contentLength === 0 {
+          Promise.resolve(%raw(`undefined`))
+        } else {
+          response.body->Undici.Response.Body.json
+        }
+      })
+      ->Promise.thenResolve(unknown => {
+        unknown->S.parseWith(dataStruct)->S.Result.getExn
+      })
     }
-  })
-  ->Promise.thenResolve(unknown => {
-    unknown->S.parseWith(dataStruct)->S.Result.getExn
-  })
 }
 
 module Struct = {
@@ -61,107 +58,79 @@ module Struct = {
 }
 
 module CreateGame = {
-  let bodyStruct = S.object(o => {"nickname": o->S.field("userName", Struct.nickname)})
-
-  let dataStruct = S.object((o): AppService.CreateGamePort.data => {
-    gameCode: o->S.field("gameCode", Struct.Game.code),
-  })
-
-  let call: AppService.CreateGamePort.t = (~nickname) => {
-    apiCall(~path="/game", ~method=#POST, ~bodyStruct, ~dataStruct, ~body={"nickname": nickname})
+  let make = (): Port.CreateGame.t => {
+    Http.make(
+      ~path="/game",
+      ~method=#POST,
+      ~inputStruct=S.object((o): Port.CreateGame.input => {
+        nickname: o->S.field("userName", Struct.nickname),
+      }),
+      ~dataStruct=S.object((o): Port.CreateGame.data => {
+        gameCode: o->S.field("gameCode", Struct.Game.code),
+      }),
+    )
   }
 }
 
 module JoinGame = {
-  let bodyStruct = S.object(o =>
-    {
-      "nickname": o->S.field("userName", Struct.nickname),
-      "gameCode": o->S.field("gameCode", Struct.Game.code),
-    }
-  )
-
-  let dataStruct = S.literal(EmptyOption)
-
-  let call: AppService.JoinGamePort.t = (~nickname, ~gameCode) => {
-    apiCall(
+  let make = (): Port.JoinGame.t => {
+    Http.make(
       ~path="/game/connection",
       ~method=#POST,
-      ~bodyStruct,
-      ~dataStruct,
-      ~body={
-        "gameCode": gameCode,
-        "nickname": nickname,
-      },
+      ~inputStruct=S.object((o): Port.JoinGame.input => {
+        nickname: o->S.field("userName", Struct.nickname),
+        gameCode: o->S.field("gameCode", Struct.Game.code),
+      }),
+      ~dataStruct=S.literal(EmptyOption),
     )
   }
 }
 
 module RequestGameStatus = {
-  let bodyStruct = S.object(o =>
-    {
-      "nickname": o->S.field("userName", Struct.nickname),
-      "gameCode": o->S.field("gameCode", Struct.Game.code),
-    }
-  )
-
-  let dataStruct = S.union([
-    S.object(o => {
-      o->S.discriminant("status", S.literal(String("waiting")))
-      AppService.RequestGameStatusPort.WaitingForOpponentJoin
-    }),
-    S.object(o => {
-      o->S.discriminant("status", S.literal(String("inProcess")))
-      AppService.RequestGameStatusPort.InProgress
-    }),
-    S.object(o => {
-      o->S.discriminant("status", S.literal(String("finished")))
-      o->S.field(
-        "gameResult",
-        S.object(o => AppService.RequestGameStatusPort.Finished({
-          outcome: o->S.field("outcome", Struct.Game.outcome),
-          yourMove: o->S.field("yourMove", Struct.Game.move),
-          opponentsMove: o->S.field("opponentsMove", Struct.Game.move),
-        })),
-      )
-    }),
-  ])
-
-  let call: AppService.RequestGameStatusPort.t = (~nickname, ~gameCode) => {
-    apiCall(
+  let make = (): Port.RequestGameStatus.t => {
+    Http.make(
       ~path="/game/status",
       ~method=#POST,
-      ~bodyStruct,
-      ~dataStruct,
-      ~body={
-        "gameCode": gameCode,
-        "nickname": nickname,
-      },
+      ~inputStruct=S.object((o): Port.RequestGameStatus.input => {
+        nickname: o->S.field("userName", Struct.nickname),
+        gameCode: o->S.field("gameCode", Struct.Game.code),
+      }),
+      ~dataStruct=S.union([
+        S.object(o => {
+          o->S.discriminant("status", S.literal(String("waiting")))
+          Port.RequestGameStatus.WaitingForOpponentJoin
+        }),
+        S.object(o => {
+          o->S.discriminant("status", S.literal(String("inProcess")))
+          Port.RequestGameStatus.InProgress
+        }),
+        S.object(o => {
+          o->S.discriminant("status", S.literal(String("finished")))
+          o->S.field(
+            "gameResult",
+            S.object(o => Port.RequestGameStatus.Finished({
+              outcome: o->S.field("outcome", Struct.Game.outcome),
+              yourMove: o->S.field("yourMove", Struct.Game.move),
+              opponentsMove: o->S.field("opponentsMove", Struct.Game.move),
+            })),
+          )
+        }),
+      ]),
     )
   }
 }
 
 module SendMove = {
-  let bodyStruct = S.object(o =>
-    {
-      "nickname": o->S.field("userName", Struct.nickname),
-      "gameCode": o->S.field("gameCode", Struct.Game.code),
-      "move": o->S.field("move", Struct.Game.move),
-    }
-  )
-
-  let dataStruct = S.literal(EmptyOption)
-
-  let call: AppService.SendMovePort.t = (~nickname, ~gameCode, ~move) => {
-    apiCall(
+  let make = (): Port.SendMove.t => {
+    Http.make(
       ~path="/game/move",
       ~method=#POST,
-      ~bodyStruct,
-      ~dataStruct,
-      ~body={
-        "gameCode": gameCode,
-        "nickname": nickname,
-        "move": move,
-      },
+      ~inputStruct=S.object((o): Port.SendMove.input => {
+        nickname: o->S.field("userName", Struct.nickname),
+        gameCode: o->S.field("gameCode", Struct.Game.code),
+        yourMove: o->S.field("move", Struct.Game.move),
+      }),
+      ~dataStruct=S.literal(EmptyOption),
     )
   }
 }

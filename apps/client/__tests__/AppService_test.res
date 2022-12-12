@@ -4,25 +4,24 @@ let defaultGameCode = Game.Code.fromString("1234")->Option.getExn
 let defaultNickname = Nickname.fromString("Dmitry")->Option.getExn
 
 asyncTest("Successfully create game and start waiting for player", t => {
-  t->Ava.ExecutionContext.plan(9)
+  t->Ava.ExecutionContext.plan(8)
 
   let stepNumberRef = ref(1)
 
   Promise.make((resolve, _) => {
     let service = AppService.make(
-      ~createGame=(~nickname) => {
-        t->Assert.deepEqual(nickname, defaultNickname, ())
-        Promise.resolve({AppService.CreateGamePort.gameCode: defaultGameCode})
+      ~createGame=(. input) => {
+        t->Assert.deepEqual(input, {nickname: defaultNickname}, ())
+        Promise.resolve({Port.CreateGame.gameCode: defaultGameCode})
       },
-      ~joinGame=(~nickname as _, ~gameCode as _) => {
+      ~joinGame=(. _) => {
         t->Assert.fail("Test CreateGameFlow")
       },
-      ~requestGameStatus=(~nickname, ~gameCode) => {
-        t->Assert.deepEqual(nickname, defaultNickname, ())
-        t->Assert.deepEqual(gameCode, gameCode, ())
-        Promise.resolve(AppService.RequestGameStatusPort.WaitingForOpponentJoin)
+      ~requestGameStatus=(. input) => {
+        t->Assert.deepEqual(input, {nickname: defaultNickname, gameCode: defaultGameCode}, ())
+        Promise.resolve(Port.RequestGameStatus.WaitingForOpponentJoin)
       },
-      ~sendMove=(~nickname as _, ~gameCode as _, ~move as _) => {
+      ~sendMove=(. _) => {
         t->Assert.fail("Test CreateGameFlow")
       },
     )
@@ -62,29 +61,29 @@ asyncTest("Successfully create game and start waiting for player", t => {
 })
 
 asyncTest("Successfully join game and start playing", t => {
-  t->Ava.ExecutionContext.plan(17)
+  t->Ava.ExecutionContext.plan(13)
 
   let stepNumberRef = ref(1)
 
   Promise.make((resolve, _) => {
     let service = AppService.make(
-      ~createGame=(~nickname as _) => {
+      ~createGame=(. _) => {
         t->Assert.fail("Test JoinGameFlow")
       },
-      ~joinGame=(~nickname, ~gameCode) => {
-        t->Assert.deepEqual(nickname, defaultNickname, ())
-        t->Assert.deepEqual(gameCode, defaultGameCode, ())
+      ~joinGame=(. input) => {
+        t->Assert.deepEqual(input, {nickname: defaultNickname, gameCode: defaultGameCode}, ())
         Promise.resolve()
       },
-      ~requestGameStatus=(~nickname, ~gameCode) => {
-        t->Assert.deepEqual(nickname, defaultNickname, ())
-        t->Assert.deepEqual(gameCode, defaultGameCode, ())
-        Promise.resolve(AppService.RequestGameStatusPort.InProgress)
+      ~requestGameStatus=(. input) => {
+        t->Assert.deepEqual(input, {nickname: defaultNickname, gameCode: defaultGameCode}, ())
+        Promise.resolve(Port.RequestGameStatus.InProgress)
       },
-      ~sendMove=(~nickname, ~gameCode, ~move) => {
-        t->Assert.deepEqual(nickname, defaultNickname, ())
-        t->Assert.deepEqual(gameCode, defaultGameCode, ())
-        t->Assert.deepEqual(move, Rock, ())
+      ~sendMove=(. input) => {
+        t->Assert.deepEqual(
+          input,
+          {nickname: defaultNickname, gameCode: defaultGameCode, yourMove: Rock},
+          (),
+        )
         Promise.resolve()
       },
     )

@@ -1,15 +1,15 @@
 module CreateGame: {
-  let call: AppService.CreateGamePort.t
+  let make: unit => Port.CreateGame.t
 }
 
 module JoinGame: {
-  let call: AppService.JoinGamePort.t
+  let make: unit => Port.JoinGame.t
 }
 
 module RequestGameStatus: {
-  let call: AppService.RequestGameStatusPort.t
+  let make: unit => Port.RequestGameStatus.t
 }
 
 module SendMove: {
-  let call: AppService.SendMovePort.t
+  let make: unit => Port.SendMove.t
 }
