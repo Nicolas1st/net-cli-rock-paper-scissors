@@ -3,7 +3,13 @@ module Http = {
     (. input: 'input): Promise.t<'data> => {
       let options: Undici.Request.options = {
         method,
-        body: input->S.serializeWith(inputStruct->S.json->Obj.magic)->S.Result.getExn->Obj.magic,
+        body: input
+        ->S.serializeWith(inputStruct)
+        ->S.Result.getExn
+        ->Json.stringifyAny
+        ->Option.getExnWithMessage(
+          `Failed to serialize input to JSON for the "${(method :> string)}" request to "${path}".`,
+        ),
       }
       Undici.Request.call(~url=`${Env.apiUrl}${path}`, ~options)
       ->Promise.then(response => {
@@ -39,7 +45,11 @@ module Struct = {
         | Some(gameCode) => gameCode
         | None => S.Error.raise(`Invalid game code. (${int->Obj.magic})`)
         },
-      ~serializer=value => value->Game.Code.toString->Int.fromString->Option.getExn,
+      ~serializer=value =>
+        switch value->Game.Code.toString->Int.fromString {
+        | Some(int) => int
+        | None => S.Error.raise(`Invalid game code.`)
+        },
       (),
     )
 
