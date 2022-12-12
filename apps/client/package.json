@@ -8,12 +8,12 @@
     "lint": "rescript-stdlib-cli lint",
     "res:build": "rescript build -with-deps",
     "res:dev": "rescript build -with-deps -w",
-    "start": "node ./src/Main.mjs",
+    "start": "node ./src/Main.bs.mjs",
     "test": "ava"
   },
   "ava": {
     "files": [
-      "__tests__/**/*_test.mjs"
+      "__tests__/**/*_test.bs.mjs"
     ]
   },
   "dependencies": {

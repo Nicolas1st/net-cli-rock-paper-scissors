@@ -2,4 +2,4 @@ node_modules
 .merlin
 .bsb.lock
 lib
-*.mjs
+**/*_test.bs.mjs

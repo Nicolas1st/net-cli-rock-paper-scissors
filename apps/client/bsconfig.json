@@ -9,7 +9,7 @@
     "@ryyppy/rescript-promise",
     "stdlib"
   ],
-  "suffix": ".mjs",
+  "suffix": ".bs.mjs",
   "package-specs": {
     "module": "es6",
     "in-source": true
