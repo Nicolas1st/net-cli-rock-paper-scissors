@@ -2,8 +2,12 @@
   "name": "client",
   "namespace": false,
   "bsc-flags": ["-open Stdlib", "-open ReScriptStruct"],
-  "bs-dev-dependencies": ["@dzakh/rescript-ava"],
-  "bs-dependencies": ["rescript-struct", "rescript-envsafe", "stdlib"],
+  "bs-dependencies": [
+    "rescript-struct",
+    "rescript-envsafe",
+    "stdlib",
+    "@dzakh/rescript-ava"
+  ],
   "suffix": ".bs.mjs",
   "package-specs": {
     "module": "es6",
@@ -13,10 +17,6 @@
     {
       "dir": "src",
       "subdirs": true
-    },
-    {
-      "dir": "__tests__",
-      "type": "dev"
     }
   ]
 }
