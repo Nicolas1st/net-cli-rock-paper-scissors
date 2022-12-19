@@ -8,7 +8,7 @@
     "lint": "npm run lint:rescript-format && npm run lint:stdlib && npm run lint:eslint",
     "lint:eslint": "eslint .",
     "lint:rescript-format": "rescript format -check",
-    "lint:stdlib": "rescript-stdlib-cli lint",
+    "lint:stdlib": "rescript-stdlib-lint lint",
     "res:build": "rescript build -with-deps",
     "res:dev": "rescript build -with-deps -w",
     "start": "node ./src/Main.bs.mjs",
@@ -31,6 +31,6 @@
     "eslint": "8.30.0",
     "@dzakh/rescript-ava": "2.1.0",
     "ava": "5.1.0",
-    "rescript-stdlib-cli": "0.3.2"
+    "rescript-stdlib-lint": "0.4.1"
   }
 }
