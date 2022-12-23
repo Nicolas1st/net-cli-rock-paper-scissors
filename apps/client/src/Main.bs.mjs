@@ -8,7 +8,8 @@ import * as Curry from "rescript/lib/es6/curry.js";
 import * as Nickname from "./entities/Nickname.bs.mjs";
 import * as AppService from "./AppService.bs.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
-import * as Stdlib_Option from "stdlib/src/Stdlib_Option.bs.mjs";
+import * as Stdlib_Option from "@dzakh/rescript-stdlib/src/Stdlib_Option.bs.mjs";
+import * as Stdlib_Promise from "@dzakh/rescript-stdlib/src/Stdlib_Promise.bs.mjs";
 
 function moveToText(move) {
   switch (move) {
@@ -62,32 +63,32 @@ function promptGameCode(param) {
 function renderer(appState) {
   if (typeof appState === "number") {
     if (appState === /* Menu */0) {
-      return UI.List.prompt("Game menu", [
-                    Curry._2(UI.List.Choice.make, "Create game", "createGame"),
-                    Curry._2(UI.List.Choice.make, "Join game", "joinGame"),
-                    Curry._2(UI.List.Choice.make, "Exit", "exit")
-                  ]).then(function (answer) {
-                  if (answer === "createGame") {
-                    return promptNickname(undefined).then(function (nickname) {
-                                return {
-                                        TAG: /* CreateGame */0,
-                                        nickname: nickname
-                                      };
-                              });
-                  } else if (answer === "joinGame") {
-                    return promptNickname(undefined).then(function (nickname) {
-                                return promptGameCode(undefined).then(function (gameCode) {
-                                            return {
-                                                    TAG: /* JoinGame */2,
-                                                    nickname: nickname,
-                                                    gameCode: gameCode
-                                                  };
-                                          });
-                              });
-                  } else {
-                    return Promise.resolve(/* Exit */1);
-                  }
-                });
+      return Stdlib_Promise.then(UI.List.prompt("Game menu", [
+                      Curry._2(UI.List.Choice.make, "Create game", "createGame"),
+                      Curry._2(UI.List.Choice.make, "Join game", "joinGame"),
+                      Curry._2(UI.List.Choice.make, "Exit", "exit")
+                    ]), (function (answer) {
+                    if (answer === "createGame") {
+                      return promptNickname(undefined).then(function (nickname) {
+                                  return {
+                                          TAG: /* CreateGame */0,
+                                          nickname: nickname
+                                        };
+                                });
+                    } else if (answer === "joinGame") {
+                      return Stdlib_Promise.then(promptNickname(undefined), (function (nickname) {
+                                    return promptGameCode(undefined).then(function (gameCode) {
+                                                return {
+                                                        TAG: /* JoinGame */2,
+                                                        nickname: nickname,
+                                                        gameCode: gameCode
+                                                      };
+                                              });
+                                  }));
+                    } else {
+                      return Promise.resolve(/* Exit */1);
+                    }
+                  }));
     } else {
       return (process.exit(0));
     }

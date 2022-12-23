@@ -20,17 +20,17 @@
     ]
   },
   "dependencies": {
+    "@dzakh/rescript-stdlib": "1.0.0",
     "inquirer": "8.2.4",
     "rescript": "10.1.0",
     "rescript-envsafe": "1.2.0",
     "rescript-struct": "3.0.0",
-    "stdlib": "file:stdlib",
     "undici": "5.13.0"
   },
   "devDependencies": {
-    "eslint": "8.30.0",
     "@dzakh/rescript-ava": "2.1.0",
     "ava": "5.1.0",
+    "eslint": "8.30.0",
     "rescript-stdlib-vendorer": "0.4.0"
   }
 }

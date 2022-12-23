@@ -8,7 +8,7 @@ module MultilineText = {
 
 let message = string => {
   _clear()
-  log(string)
+  Console.log(string)
 }
 
 let _promptName = "promptName"
@@ -57,7 +57,10 @@ module Input = {
         },
       },
     ])->Promise.thenResolve(answer => {
-      answer->Dict.unsafeGet(_promptName)->parser->Result.getExn
+      answer
+      ->Dict.getUnsafe(_promptName)
+      ->parser
+      ->Result.getExnWithMessage("Must be already validated by the validate function.")
     })
 }
 
@@ -96,6 +99,6 @@ module List = {
         choices,
       },
     ])->Promise.thenResolve(answer => {
-      answer->Dict.unsafeGet(_promptName)
+      answer->Dict.getUnsafe(_promptName)
     })
 }

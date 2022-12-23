@@ -2,6 +2,7 @@
 
 import * as FSM from "./utils/FSM.bs.mjs";
 import * as Caml_obj from "rescript/lib/es6/caml_obj.js";
+import * as Caml_option from "rescript/lib/es6/caml_option.js";
 
 var machine = FSM.make((function (state, $$event) {
         if (state) {
@@ -147,7 +148,7 @@ function make(createGame, joinGame, requestGameStatus, sendMove) {
   var stopGameStatusSync = function (param) {
     var gameStatusSyncIntervalId = maybeGameStatusSyncIntervalIdRef.contents;
     if (gameStatusSyncIntervalId !== undefined) {
-      clearInterval(gameStatusSyncIntervalId);
+      clearInterval(Caml_option.valFromOption(gameStatusSyncIntervalId));
       return ;
     }
     
@@ -176,9 +177,9 @@ function make(createGame, joinGame, requestGameStatus, sendMove) {
                 
               } else {
                 syncGameStatus(gameCode, nickname);
-                maybeGameStatusSyncIntervalIdRef.contents = setInterval((function (param) {
-                        syncGameStatus(gameCode, nickname);
-                      }), 3000);
+                maybeGameStatusSyncIntervalIdRef.contents = Caml_option.some(setInterval((function (param) {
+                            syncGameStatus(gameCode, nickname);
+                          }), 3000));
               }
             }
             

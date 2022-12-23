@@ -5,7 +5,7 @@
   "bs-dependencies": [
     "rescript-struct",
     "rescript-envsafe",
-    "stdlib",
+    "@dzakh/rescript-stdlib",
     "@dzakh/rescript-ava"
   ],
   "suffix": ".bs.mjs",

@@ -125,7 +125,7 @@ let make = (
     | Game({gameState: Status(WaitingForOpponentMove({yourMove})), nickname, gameCode}) =>
       sendMove(. {gameCode, nickname, yourMove})->ignore
     | Exiting =>
-      Global.queueMicrotask(() => {
+      NodeJs.queueMicrotask(() => {
         service->FSM.stop
       })
     | _ => ()

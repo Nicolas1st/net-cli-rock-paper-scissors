@@ -3,11 +3,11 @@
 import * as Env from "./Env.bs.mjs";
 import * as Game from "./entities/Game.bs.mjs";
 import * as Undici from "undici";
-import * as Js_dict from "rescript/lib/es6/js_dict.js";
-import * as Belt_Int from "rescript/lib/es6/belt_Int.js";
 import * as Nickname from "./entities/Nickname.bs.mjs";
+import * as Stdlib_Int from "@dzakh/rescript-stdlib/src/Stdlib_Int.bs.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
-import * as Stdlib_Option from "stdlib/src/Stdlib_Option.bs.mjs";
+import * as Stdlib_Option from "@dzakh/rescript-stdlib/src/Stdlib_Option.bs.mjs";
+import * as Stdlib_Promise from "@dzakh/rescript-stdlib/src/Stdlib_Promise.bs.mjs";
 import * as S$ReScriptStruct from "rescript-struct/src/S.bs.mjs";
 
 function make(path, method, inputStruct, dataStruct) {
@@ -17,14 +17,14 @@ function make(path, method, inputStruct, dataStruct) {
       method: method,
       body: options_body
     };
-    return Undici.request("" + Env.apiUrl + "" + path + "", options).then(function (response) {
-                  var contentLength = Stdlib_Option.getWithDefault(Stdlib_Option.flatMap(Js_dict.get(response.headers, "content-length"), Belt_Int.fromString), 0);
-                  if (contentLength === 0) {
-                    return Promise.resolve(undefined);
-                  } else {
-                    return response.body.json();
-                  }
-                }).then(function (unknown) {
+    return Stdlib_Promise.then(Undici.request("" + Env.apiUrl + "" + path + "", options), (function (response) {
+                    var contentLength = Stdlib_Option.getWithDefault(Stdlib_Option.flatMap(response.headers["content-length"], Stdlib_Int.fromString), 0);
+                    if (contentLength === 0) {
+                      return Promise.resolve(undefined);
+                    } else {
+                      return response.body.json();
+                    }
+                  })).then(function (unknown) {
                 return S$ReScriptStruct.Result.getExn(S$ReScriptStruct.parseWith(unknown, dataStruct));
               });
   };
@@ -40,14 +40,14 @@ var nickname = S$ReScriptStruct.transform(S$ReScriptStruct.string(undefined), (f
       }), Nickname.toString, undefined);
 
 var code = S$ReScriptStruct.transform(S$ReScriptStruct.$$int(undefined), (function ($$int) {
-        var gameCode = Game.Code.fromString(String($$int));
+        var gameCode = Game.Code.fromString($$int.toString());
         if (gameCode !== undefined) {
           return Caml_option.valFromOption(gameCode);
         } else {
           return S$ReScriptStruct.$$Error.raise("Invalid game code. (" + $$int + ")");
         }
       }), (function (value) {
-        var $$int = Belt_Int.fromString(Game.Code.toString(value));
+        var $$int = Stdlib_Int.fromString(Game.Code.toString(value));
         if ($$int !== undefined) {
           return $$int;
         } else {

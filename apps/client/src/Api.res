@@ -6,7 +6,7 @@ module Http = {
         body: input
         ->S.serializeWith(inputStruct)
         ->S.Result.getExn
-        ->Json.stringifyAny
+        ->JSON.stringifyAny
         ->Option.getExnWithMessage(
           `Failed to serialize input to JSON for the "${(method :> string)}" request to "${path}".`,
         ),
