@@ -31,5 +31,6 @@ func (c *gameController) CreateGame(w http.ResponseWriter, r *http.Request) {
 
 	gameCode := c.gameStorer.CreateGame(req.UserName)
 	resp.GameCode = gameCode
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
 }

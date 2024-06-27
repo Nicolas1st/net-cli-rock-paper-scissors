@@ -5,6 +5,7 @@
   "bs-dependencies": [
     "rescript-schema",
     "rescript-envsafe",
+    "rescript-rest",
     "@rescript/core",
     "@dzakh/rescript-ava"
   ],

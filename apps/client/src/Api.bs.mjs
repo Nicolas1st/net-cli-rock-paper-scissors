@@ -2,36 +2,11 @@
 
 import * as Env from "./Env.bs.mjs";
 import * as Game from "./entities/Game.bs.mjs";
-import * as Undici from "undici";
+import * as Rest from "rescript-rest/src/Rest.bs.mjs";
 import * as Nickname from "./entities/Nickname.bs.mjs";
 import * as Core__Int from "@rescript/core/src/Core__Int.bs.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
-import * as Core__Option from "@rescript/core/src/Core__Option.bs.mjs";
 import * as S$RescriptSchema from "rescript-schema/src/S.bs.mjs";
-
-function make(path, method, inputSchema, dataSchema) {
-  return function (input) {
-    var jsonString = S$RescriptSchema.serializeToJsonStringWith(input, inputSchema, undefined);
-    var tmp;
-    tmp = jsonString.TAG === "Ok" ? jsonString._0 : S$RescriptSchema.$$Error.raise(jsonString._0);
-    var options = {
-      method: method,
-      body: tmp
-    };
-    return Undici.request(Env.apiUrl + path, options).then(function (response) {
-                  var contentLength = Core__Option.getOr(Core__Option.flatMap(response.headers["content-length"], (function (__x) {
-                              return Core__Int.fromString(__x, undefined);
-                            })), 0);
-                  if (contentLength === 0) {
-                    return Promise.resolve(undefined);
-                  } else {
-                    return response.body.json();
-                  }
-                }).then(function (unknown) {
-                return S$RescriptSchema.parseAnyOrRaiseWith(unknown, dataSchema);
-              });
-  };
-}
 
 var nickname = S$RescriptSchema.transform(S$RescriptSchema.string, (function (s) {
         return {
@@ -92,82 +67,132 @@ var outcome = S$RescriptSchema.union([
             }))
     ]);
 
-function make$1() {
-  return make("/game", "POST", S$RescriptSchema.object(function (s) {
+var client = Rest.client(Env.apiUrl, undefined, undefined);
+
+function make() {
+  var route = function () {
+    return {
+            method: "POST",
+            path: "/game",
+            variables: (function (s) {
+                return {
+                        nickname: s.field("userName", nickname)
+                      };
+              }),
+            responses: [(function (s) {
+                  s.status(200);
                   return {
-                          nickname: s.f("userName", nickname)
+                          gameCode: s.field("gameCode", code)
                         };
-                }), S$RescriptSchema.object(function (s) {
-                  return {
-                          gameCode: s.f("gameCode", code)
-                        };
-                }));
+                })]
+          };
+  };
+  return function (variables) {
+    return client.call(route, variables);
+  };
 }
 
 var CreateGame = {
+  make: make
+};
+
+function make$1() {
+  var route = function () {
+    return {
+            method: "POST",
+            path: "/game/connection",
+            variables: (function (s) {
+                return {
+                        nickname: s.field("userName", nickname),
+                        gameCode: s.field("gameCode", code)
+                      };
+              }),
+            responses: [(function (s) {
+                  s.status(204);
+                })]
+          };
+  };
+  return function (variables) {
+    return client.call(route, variables);
+  };
+}
+
+var JoinGame = {
   make: make$1
 };
 
 function make$2() {
-  return make("/game/connection", "POST", S$RescriptSchema.object(function (s) {
-                  return {
-                          nickname: s.f("userName", nickname),
-                          gameCode: s.f("gameCode", code)
-                        };
-                }), S$RescriptSchema.unit);
+  var route = function () {
+    return {
+            method: "POST",
+            path: "/game/status",
+            variables: (function (s) {
+                return {
+                        nickname: s.field("userName", nickname),
+                        gameCode: s.field("gameCode", code)
+                      };
+              }),
+            responses: [(function (s) {
+                  s.status(200);
+                  return s.data(S$RescriptSchema.union([
+                                  S$RescriptSchema.object(function (s) {
+                                        s.tag("status", "waiting");
+                                        return "WaitingForOpponentJoin";
+                                      }),
+                                  S$RescriptSchema.object(function (s) {
+                                        s.tag("status", "inProcess");
+                                        return "InProgress";
+                                      }),
+                                  S$RescriptSchema.object(function (s) {
+                                        s.tag("status", "finished");
+                                        return s.f("gameResult", S$RescriptSchema.object(function (s) {
+                                                        return {
+                                                                TAG: "Finished",
+                                                                _0: {
+                                                                  outcome: s.f("outcome", outcome),
+                                                                  yourMove: s.f("yourMove", move),
+                                                                  opponentsMove: s.f("opponentsMove", move)
+                                                                }
+                                                              };
+                                                      }));
+                                      })
+                                ]));
+                })]
+          };
+  };
+  return function (variables) {
+    return client.call(route, variables);
+  };
 }
 
-var JoinGame = {
+var RequestGameStatus = {
   make: make$2
 };
 
 function make$3() {
-  return make("/game/status", "POST", S$RescriptSchema.object(function (s) {
-                  return {
-                          nickname: s.f("userName", nickname),
-                          gameCode: s.f("gameCode", code)
-                        };
-                }), S$RescriptSchema.union([
-                  S$RescriptSchema.object(function (s) {
-                        s.tag("status", "waiting");
-                        return "WaitingForOpponentJoin";
-                      }),
-                  S$RescriptSchema.object(function (s) {
-                        s.tag("status", "inProcess");
-                        return "InProgress";
-                      }),
-                  S$RescriptSchema.object(function (s) {
-                        s.tag("status", "finished");
-                        return s.f("gameResult", S$RescriptSchema.object(function (s) {
-                                        return {
-                                                TAG: "Finished",
-                                                _0: {
-                                                  outcome: s.f("outcome", outcome),
-                                                  yourMove: s.f("yourMove", move),
-                                                  opponentsMove: s.f("opponentsMove", move)
-                                                }
-                                              };
-                                      }));
-                      })
-                ]));
-}
-
-var RequestGameStatus = {
-  make: make$3
-};
-
-function make$4() {
-  return make("/game/move", "POST", S$RescriptSchema.object(function (s) {
-                  return {
-                          nickname: s.f("userName", nickname),
-                          gameCode: s.f("gameCode", code),
-                          yourMove: s.f("move", move)
-                        };
-                }), S$RescriptSchema.unit);
+  var route = function () {
+    return {
+            method: "POST",
+            path: "/game/move",
+            variables: (function (s) {
+                return {
+                        nickname: s.field("userName", nickname),
+                        gameCode: s.field("gameCode", code),
+                        yourMove: s.field("move", move)
+                      };
+              }),
+            responses: [(function (s) {
+                  s.status(204);
+                })]
+          };
+  };
+  return function (variables) {
+    return client.call(route, variables);
+  };
 }
 
 var SendMove = {
-  make: make$4
+  make: make$3
 };
 
 export {

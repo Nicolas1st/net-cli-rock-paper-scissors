@@ -24,6 +24,7 @@
     "inquirer": "8.2.4",
     "rescript": "11.1.2",
     "rescript-envsafe": "4.1.0",
+    "rescript-rest": "0.4.1",
     "rescript-schema": "7.0.1",
     "undici": "5.28.4"
   },

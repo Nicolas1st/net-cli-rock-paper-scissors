@@ -35,6 +35,7 @@ func (c *gameController) GetStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	if status == game.Finished {
 		var resp GetGameFinishedStatusResponse
 		resp.Status = status
