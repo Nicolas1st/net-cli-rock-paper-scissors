@@ -8,8 +8,8 @@ function fromString(string) {
   
 }
 
-function toString(prim) {
-  return prim;
+function toString(v) {
+  return v;
 }
 
 export {

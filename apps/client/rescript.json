@@ -1,16 +1,16 @@
 {
   "name": "client",
   "namespace": false,
-  "bsc-flags": ["-open Stdlib", "-open ReScriptStruct"],
+  "bsc-flags": ["-open RescriptCore", "-open RescriptSchema"],
   "bs-dependencies": [
-    "rescript-struct",
+    "rescript-schema",
     "rescript-envsafe",
-    "@dzakh/rescript-stdlib",
+    "@rescript/core",
     "@dzakh/rescript-ava"
   ],
   "suffix": ".bs.mjs",
   "package-specs": {
-    "module": "es6",
+    "module": "esmodule",
     "in-source": true
   },
   "sources": [

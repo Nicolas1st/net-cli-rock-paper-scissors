@@ -4,43 +4,41 @@ import * as UI from "./UI.bs.mjs";
 import * as Api from "./Api.bs.mjs";
 import * as FSM from "./utils/FSM.bs.mjs";
 import * as Game from "./entities/Game.bs.mjs";
-import * as Curry from "rescript/lib/es6/curry.js";
 import * as Nickname from "./entities/Nickname.bs.mjs";
 import * as AppService from "./AppService.bs.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
-import * as Stdlib_Option from "@dzakh/rescript-stdlib/src/Stdlib_Option.bs.mjs";
-import * as Stdlib_Promise from "@dzakh/rescript-stdlib/src/Stdlib_Promise.bs.mjs";
+import * as Core__Option from "@rescript/core/src/Core__Option.bs.mjs";
 
 function moveToText(move) {
   switch (move) {
-    case /* Rock */0 :
+    case "Rock" :
         return "Rock 🪨";
-    case /* Scissors */1 :
+    case "Scissors" :
         return "Scissors ✂️";
-    case /* Paper */2 :
+    case "Paper" :
         return "Paper 📄";
     
   }
 }
 
-function promptNickname(param) {
+function promptNickname() {
   return UI.Input.prompt("What's your nickname?", (function (value) {
                 var nickname = Nickname.fromString(value);
                 if (nickname !== undefined) {
                   return {
-                          TAG: /* Ok */0,
+                          TAG: "Ok",
                           _0: Caml_option.valFromOption(nickname)
                         };
                 } else {
                   return {
-                          TAG: /* Error */1,
+                          TAG: "Error",
                           _0: "Nickname is invalid"
                         };
                 }
               }));
 }
 
-function promptGameCode(param) {
+function promptGameCode() {
   return UI.Input.prompt(UI.MultilineText.make([
                   "Enter a code of the game you want to join.",
                   "(Ask it from the creator of the game)\n"
@@ -48,139 +46,160 @@ function promptGameCode(param) {
                 var gameCode = Game.Code.fromString(value);
                 if (gameCode !== undefined) {
                   return {
-                          TAG: /* Ok */0,
+                          TAG: "Ok",
                           _0: Caml_option.valFromOption(gameCode)
                         };
                 } else {
                   return {
-                          TAG: /* Error */1,
+                          TAG: "Error",
                           _0: "Game code is invalid"
                         };
                 }
               }));
 }
 
+function make() {
+  return UI.List.prompt("Game menu", [
+                UI.List.Choice.make("Create game", "createGame"),
+                UI.List.Choice.make("Join game", "joinGame"),
+                UI.List.Choice.make("Exit", "exit")
+              ]).then(function (answer) {
+              if (answer === "createGame") {
+                return promptNickname().then(function (nickname) {
+                            return {
+                                    TAG: "CreateGame",
+                                    nickname: nickname
+                                  };
+                          });
+              } else if (answer === "joinGame") {
+                return promptNickname().then(function (nickname) {
+                            return promptGameCode().then(function (gameCode) {
+                                        return {
+                                                TAG: "JoinGame",
+                                                nickname: nickname,
+                                                gameCode: gameCode
+                                              };
+                                      });
+                          });
+              } else {
+                return Promise.resolve("Exit");
+              }
+            });
+}
+
+function make$1() {
+  UI.message("Creating game...");
+  return Promise.resolve(undefined);
+}
+
+function make$2() {
+  UI.message("Joining game...");
+  return Promise.resolve(undefined);
+}
+
+function make$3() {
+  UI.message("Loading game...");
+  return Promise.resolve(undefined);
+}
+
+function make$4() {
+  return UI.List.prompt("What's your move?", Game.Move.values.map(function (move) {
+                    return UI.List.Choice.make(moveToText(move), move);
+                  })).then(function (answer) {
+              return {
+                      TAG: "GameEvent",
+                      _0: {
+                        TAG: "SendMove",
+                        _0: answer
+                      }
+                    };
+            });
+}
+
 function renderer(appState) {
-  if (typeof appState === "number") {
-    if (appState === /* Menu */0) {
-      return Stdlib_Promise.then(UI.List.prompt("Game menu", [
-                      Curry._2(UI.List.Choice.make, "Create game", "createGame"),
-                      Curry._2(UI.List.Choice.make, "Join game", "joinGame"),
-                      Curry._2(UI.List.Choice.make, "Exit", "exit")
-                    ]), (function (answer) {
-                    if (answer === "createGame") {
-                      return promptNickname(undefined).then(function (nickname) {
-                                  return {
-                                          TAG: /* CreateGame */0,
-                                          nickname: nickname
-                                        };
-                                });
-                    } else if (answer === "joinGame") {
-                      return Stdlib_Promise.then(promptNickname(undefined), (function (nickname) {
-                                    return promptGameCode(undefined).then(function (gameCode) {
-                                                return {
-                                                        TAG: /* JoinGame */2,
-                                                        nickname: nickname,
-                                                        gameCode: gameCode
-                                                      };
-                                              });
-                                  }));
-                    } else {
-                      return Promise.resolve(/* Exit */1);
-                    }
-                  }));
+  if (typeof appState !== "object") {
+    if (appState === "Menu") {
+      return make();
     } else {
       return (process.exit(0));
     }
   }
-  switch (appState.TAG | 0) {
-    case /* CreatingGame */0 :
-        UI.message("Creating game...");
-        return Promise.resolve(undefined);
-    case /* JoiningGame */1 :
-        UI.message("Joining game...");
-        return Promise.resolve(undefined);
-    case /* Game */2 :
+  switch (appState.TAG) {
+    case "CreatingGame" :
+        return make$1();
+    case "JoiningGame" :
+        return make$2();
+    case "Game" :
         var match = appState.gameState;
-        if (match) {
-          var match$1 = match._0;
-          if (typeof match$1 === "number") {
-            if (match$1 === /* WaitingForOpponentJoin */0) {
-              var gameCode = appState.gameCode;
-              UI.message(UI.MultilineText.make([
-                        "Waiting when an opponent joins the game...",
-                        "Game code: " + Game.Code.toString(gameCode) + ""
-                      ]));
-              return Promise.resolve(undefined);
-            } else {
-              return UI.List.prompt("What's your move?", Game.Move.values.map(function (move) {
-                                return Curry._2(UI.List.Choice.make, moveToText(move), move);
-                              })).then(function (answer) {
-                          return {
-                                  TAG: /* GameEvent */3,
-                                  _0: {
-                                    TAG: /* SendMove */1,
-                                    _0: answer
-                                  }
-                                };
-                        });
-            }
-          }
-          if (match$1.TAG === /* WaitingForOpponentMove */0) {
-            var yourMove = match$1.yourMove;
+        if (typeof match !== "object") {
+          return make$3();
+        }
+        var match$1 = match._0;
+        if (typeof match$1 !== "object") {
+          if (match$1 === "WaitingForOpponentJoin") {
+            var gameCode = appState.gameCode;
             UI.message(UI.MultilineText.make([
-                      "Waiting for your opponent's move...",
-                      "Your move: " + moveToText(yourMove) + ""
+                      "Waiting when an opponent joins the game...",
+                      "Game code: " + Game.Code.toString(gameCode)
                     ]));
             return Promise.resolve(undefined);
+          } else {
+            return make$4();
           }
-          var match$2 = match$1._0;
-          var outcome = match$2.outcome;
-          var yourMove$1 = match$2.yourMove;
-          var opponentsMove = match$2.opponentsMove;
-          var outcomeText;
-          switch (outcome) {
-            case /* Draw */0 :
-                outcomeText = "Draw 🤝";
-                break;
-            case /* Win */1 :
-                outcomeText = "You won 🏆";
-                break;
-            case /* Loss */2 :
-                outcomeText = "You lost 🪦";
-                break;
-            
-          }
+        }
+        if (match$1.TAG === "WaitingForOpponentMove") {
+          var yourMove = match$1.yourMove;
           UI.message(UI.MultilineText.make([
-                    "Game finished!",
-                    "Outcome: " + outcomeText + "",
-                    "Your move: " + moveToText(yourMove$1) + "",
-                    "Opponent's move: " + moveToText(opponentsMove) + ""
+                    "Waiting for your opponent's move...",
+                    "Your move: " + moveToText(yourMove)
                   ]));
           return Promise.resolve(undefined);
-        } else {
-          UI.message("Loading game...");
-          return Promise.resolve(undefined);
         }
+        var match$2 = match$1._0;
+        var outcome = match$2.outcome;
+        var yourMove$1 = match$2.yourMove;
+        var opponentsMove = match$2.opponentsMove;
+        var outcomeText;
+        switch (outcome) {
+          case "Draw" :
+              outcomeText = "Draw 🤝";
+              break;
+          case "Win" :
+              outcomeText = "You won 🏆";
+              break;
+          case "Loss" :
+              outcomeText = "You lost 🪦";
+              break;
+          
+        }
+        UI.message(UI.MultilineText.make([
+                  "Game finished!",
+                  "Outcome: " + outcomeText,
+                  "Your move: " + moveToText(yourMove$1),
+                  "Opponent's move: " + moveToText(opponentsMove)
+                ]));
+        return Promise.resolve(undefined);
     
   }
 }
 
-function run(param) {
-  var service = AppService.make(Api.CreateGame.make(undefined), Api.JoinGame.make(undefined), Api.RequestGameStatus.make(undefined), Api.SendMove.make(undefined));
+function run() {
+  var service = AppService.make(Api.CreateGame.make(), Api.JoinGame.make(), Api.RequestGameStatus.make(), Api.SendMove.make());
   var render = function (state$p) {
-    renderer(state$p).then(function (answer) {
-          return Stdlib_Option.map(answer, (function (param) {
-                        return FSM.send(service, param);
+    renderer(state$p).then(function (maybeAnswer) {
+          return Core__Option.map(maybeAnswer, (function (answer) {
+                        FSM.send(service, answer);
                       }));
         });
   };
-  FSM.subscribe(service, render);
+  FSM.subscribe(service, (function (state) {
+          render(state);
+        }));
   FSM.start(service);
   render(FSM.getCurrentState(service));
 }
 
-run(undefined);
+run();
 
 export {
   

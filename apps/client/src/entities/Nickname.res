@@ -8,4 +8,4 @@ let fromString = string => {
   }
 }
 
-let toString = Obj.magic
+let toString = v => v->Obj.magic

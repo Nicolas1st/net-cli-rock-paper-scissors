@@ -81,7 +81,7 @@ let make = (
   let maybeGameStatusSyncIntervalIdRef = ref(None)
 
   let syncGameStatus = (~gameCode, ~nickname) => {
-    requestGameStatus(. {gameCode, nickname})
+    requestGameStatus({gameCode, nickname})
     ->Promise.thenResolve(data => {
       service->FSM.send(GameEvent(OnGameStatus(data)))
     })
@@ -89,7 +89,7 @@ let make = (
   }
   let stopGameStatusSync = () => {
     switch maybeGameStatusSyncIntervalIdRef.contents {
-    | Some(gameStatusSyncIntervalId) => Global.clearInterval(gameStatusSyncIntervalId)
+    | Some(gameStatusSyncIntervalId) => clearInterval(gameStatusSyncIntervalId)
     | None => ()
     }
   }
@@ -102,7 +102,7 @@ let make = (
       | Some(_) => ()
       | None => {
           syncGameStatus(~gameCode, ~nickname)
-          maybeGameStatusSyncIntervalIdRef.contents = Some(Global.setInterval(() => {
+          maybeGameStatusSyncIntervalIdRef.contents = Some(setInterval(() => {
               syncGameStatus(~gameCode, ~nickname)
             }, 3000))
         }
@@ -111,19 +111,19 @@ let make = (
     }
     switch state {
     | CreatingGame({nickname}) =>
-      createGame(. {nickname: nickname})
+      createGame({nickname: nickname})
       ->Promise.thenResolve(({Port.CreateGame.gameCode: gameCode}) => {
         service->FSM.send(OnCreateGameSuccess({gameCode: gameCode}))
       })
       ->ignore
     | JoiningGame({nickname, gameCode}) =>
-      joinGame(. {nickname, gameCode})
+      joinGame({nickname, gameCode})
       ->Promise.thenResolve(() => {
         service->FSM.send(OnJoinGameSuccess)
       })
       ->ignore
     | Game({gameState: Status(WaitingForOpponentMove({yourMove})), nickname, gameCode}) =>
-      sendMove(. {gameCode, nickname, yourMove})->ignore
+      sendMove({gameCode, nickname, yourMove})->ignore
     | Exiting =>
       NodeJs.queueMicrotask(() => {
         service->FSM.stop

@@ -5,73 +5,76 @@ import * as Caml_obj from "rescript/lib/es6/caml_obj.js";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
 
 var machine = FSM.make((function (state, $$event) {
-        if (state) {
+        if (typeof state === "object") {
           var tmp = state._0;
-          if (typeof tmp === "number") {
-            if (tmp !== /* WaitingForOpponentJoin */0 && $$event.TAG !== /* OnGameStatus */0) {
-              return /* Status */{
+          if (typeof tmp !== "object") {
+            if (tmp !== "WaitingForOpponentJoin" && $$event.TAG !== "OnGameStatus") {
+              return {
+                      TAG: "Status",
                       _0: {
-                        TAG: /* WaitingForOpponentMove */0,
+                        TAG: "WaitingForOpponentMove",
                         yourMove: $$event._0
                       }
                     };
             }
             
-          } else if (tmp.TAG === /* WaitingForOpponentMove */0) {
-            if ($$event.TAG !== /* OnGameStatus */0) {
+          } else if (tmp.TAG === "WaitingForOpponentMove") {
+            if ($$event.TAG !== "OnGameStatus") {
               return state;
             }
-            var match = $$event._0;
-            if (typeof match === "number" && match !== 0) {
+            var tmp$1 = $$event._0;
+            if (typeof tmp$1 !== "object" && tmp$1 !== "WaitingForOpponentJoin") {
               return state;
             }
             
           }
           
         }
-        if ($$event.TAG !== /* OnGameStatus */0) {
+        if ($$event.TAG !== "OnGameStatus") {
           return state;
         }
         var gameStatusData = $$event._0;
-        var remoteGameStatus = typeof gameStatusData === "number" ? (
-            gameStatusData !== 0 ? /* ReadyToPlay */1 : /* WaitingForOpponentJoin */0
+        var remoteGameStatus;
+        remoteGameStatus = typeof gameStatusData !== "object" ? (
+            gameStatusData === "WaitingForOpponentJoin" ? "WaitingForOpponentJoin" : "ReadyToPlay"
           ) : ({
-              TAG: /* Finished */1,
+              TAG: "Finished",
               _0: gameStatusData._0
             });
-        if (state && !Caml_obj.notequal(state._0, remoteGameStatus)) {
-          return state;
-        } else {
-          return /* Status */{
+        if (typeof state !== "object" || Caml_obj.notequal(state._0, remoteGameStatus)) {
+          return {
+                  TAG: "Status",
                   _0: remoteGameStatus
                 };
+        } else {
+          return state;
         }
-      }), /* Loading */0);
+      }), "Loading");
 
 var machine$1 = FSM.make((function (state, $$event) {
-        if (typeof $$event === "number" && $$event !== 0) {
-          if (state !== /* Exiting */1) {
-            return /* Exiting */1;
+        if (typeof $$event !== "object" && $$event === "Exit") {
+          if (state !== "Exiting") {
+            return "Exiting";
           } else {
             return state;
           }
         }
-        if (typeof state === "number") {
-          if (state !== /* Menu */0) {
+        if (typeof state !== "object") {
+          if (state !== "Menu") {
             return state;
           }
-          if (typeof $$event === "number") {
+          if (typeof $$event !== "object") {
             return state;
           }
-          switch ($$event.TAG | 0) {
-            case /* CreateGame */0 :
+          switch ($$event.TAG) {
+            case "CreateGame" :
                 return {
-                        TAG: /* CreatingGame */0,
+                        TAG: "CreatingGame",
                         nickname: $$event.nickname
                       };
-            case /* JoinGame */2 :
+            case "JoinGame" :
                 return {
-                        TAG: /* JoiningGame */1,
+                        TAG: "JoiningGame",
                         nickname: $$event.nickname,
                         gameCode: $$event.gameCode
                       };
@@ -79,22 +82,22 @@ var machine$1 = FSM.make((function (state, $$event) {
               return state;
           }
         } else {
-          switch (state.TAG | 0) {
-            case /* CreatingGame */0 :
-                if (typeof $$event === "number" || $$event.TAG !== /* OnCreateGameSuccess */1) {
+          switch (state.TAG) {
+            case "CreatingGame" :
+                if (typeof $$event !== "object" || $$event.TAG !== "OnCreateGameSuccess") {
                   return state;
                 } else {
                   return {
-                          TAG: /* Game */2,
+                          TAG: "Game",
                           nickname: state.nickname,
                           gameCode: $$event.gameCode,
                           gameState: FSM.getInitialState(machine)
                         };
                 }
-            case /* JoiningGame */1 :
-                if (typeof $$event === "number") {
+            case "JoiningGame" :
+                if (typeof $$event !== "object" && $$event === "OnJoinGameSuccess") {
                   return {
-                          TAG: /* Game */2,
+                          TAG: "Game",
                           nickname: state.nickname,
                           gameCode: state.gameCode,
                           gameState: FSM.getInitialState(machine)
@@ -102,18 +105,18 @@ var machine$1 = FSM.make((function (state, $$event) {
                 } else {
                   return state;
                 }
-            case /* Game */2 :
-                if (typeof $$event === "number") {
+            case "Game" :
+                if (typeof $$event !== "object") {
                   return state;
                 }
-                if ($$event.TAG !== /* GameEvent */3) {
+                if ($$event.TAG !== "GameEvent") {
                   return state;
                 }
                 var prevGameState = state.gameState;
                 var nextGameState = FSM.transition(machine, prevGameState, $$event._0);
                 if (Caml_obj.notequal(nextGameState, prevGameState)) {
                   return {
-                          TAG: /* Game */2,
+                          TAG: "Game",
                           nickname: state.nickname,
                           gameCode: state.gameCode,
                           gameState: nextGameState
@@ -124,7 +127,7 @@ var machine$1 = FSM.make((function (state, $$event) {
             
           }
         }
-      }), /* Menu */0);
+      }), "Menu");
 
 function make(createGame, joinGame, requestGameStatus, sendMove) {
   var service = FSM.interpret(machine$1);
@@ -137,15 +140,15 @@ function make(createGame, joinGame, requestGameStatus, sendMove) {
             gameCode: gameCode
           }).then(function (data) {
           FSM.send(service, {
-                TAG: /* GameEvent */3,
+                TAG: "GameEvent",
                 _0: {
-                  TAG: /* OnGameStatus */0,
+                  TAG: "OnGameStatus",
                   _0: data
                 }
               });
         });
   };
-  var stopGameStatusSync = function (param) {
+  var stopGameStatusSync = function () {
     var gameStatusSyncIntervalId = maybeGameStatusSyncIntervalIdRef.contents;
     if (gameStatusSyncIntervalId !== undefined) {
       clearInterval(Caml_option.valFromOption(gameStatusSyncIntervalId));
@@ -154,22 +157,22 @@ function make(createGame, joinGame, requestGameStatus, sendMove) {
     
   };
   FSM.subscribe(service, (function (state) {
-          if (typeof state === "number" || state.TAG !== /* Game */2) {
-            stopGameStatusSync(undefined);
+          if (typeof state !== "object" || state.TAG !== "Game") {
+            stopGameStatusSync();
           } else {
             var match = state.gameState;
             var gameCode = state.gameCode;
             var nickname = state.nickname;
             var exit = 0;
-            if (match) {
+            if (typeof match !== "object") {
+              exit = 1;
+            } else {
               var tmp = match._0;
-              if (typeof tmp === "number" || tmp.TAG !== /* Finished */1) {
+              if (typeof tmp !== "object" || tmp.TAG !== "Finished") {
                 exit = 1;
               } else {
-                stopGameStatusSync(undefined);
+                stopGameStatusSync();
               }
-            } else {
-              exit = 1;
             }
             if (exit === 1) {
               var match$1 = maybeGameStatusSyncIntervalIdRef.contents;
@@ -177,51 +180,51 @@ function make(createGame, joinGame, requestGameStatus, sendMove) {
                 
               } else {
                 syncGameStatus(gameCode, nickname);
-                maybeGameStatusSyncIntervalIdRef.contents = Caml_option.some(setInterval((function (param) {
+                maybeGameStatusSyncIntervalIdRef.contents = Caml_option.some(setInterval((function () {
                             syncGameStatus(gameCode, nickname);
                           }), 3000));
               }
             }
             
           }
-          if (typeof state === "number") {
-            if (state === /* Menu */0) {
+          if (typeof state !== "object") {
+            if (state === "Menu") {
               return ;
             }
-            queueMicrotask(function (param) {
+            queueMicrotask(function () {
                   FSM.stop(service);
                 });
             return ;
           } else {
-            switch (state.TAG | 0) {
-              case /* CreatingGame */0 :
+            switch (state.TAG) {
+              case "CreatingGame" :
                   createGame({
                           nickname: state.nickname
                         }).then(function (param) {
                         FSM.send(service, {
-                              TAG: /* OnCreateGameSuccess */1,
+                              TAG: "OnCreateGameSuccess",
                               gameCode: param.gameCode
                             });
                       });
                   return ;
-              case /* JoiningGame */1 :
+              case "JoiningGame" :
                   joinGame({
                           nickname: state.nickname,
                           gameCode: state.gameCode
-                        }).then(function (param) {
-                        FSM.send(service, /* OnJoinGameSuccess */0);
+                        }).then(function () {
+                        FSM.send(service, "OnJoinGameSuccess");
                       });
                   return ;
-              case /* Game */2 :
+              case "Game" :
                   var match$2 = state.gameState;
-                  if (!match$2) {
+                  if (typeof match$2 !== "object") {
                     return ;
                   }
                   var match$3 = match$2._0;
-                  if (typeof match$3 === "number") {
+                  if (typeof match$3 !== "object") {
                     return ;
                   }
-                  if (match$3.TAG !== /* WaitingForOpponentMove */0) {
+                  if (match$3.TAG !== "WaitingForOpponentMove") {
                     return ;
                   }
                   sendMove({

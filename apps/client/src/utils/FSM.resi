@@ -14,7 +14,7 @@ let interpret: t<'state, 'event> => service<'state, 'event>
 
 let send: (service<'state, 'event>, 'event) => unit
 
-let subscribe: (service<'state, 'event>, 'state => unit, unit) => unit
+let subscribe: (service<'state, 'event>, 'state => unit) => unit => unit
 
 let getCurrentState: service<'state, 'event> => 'state
 

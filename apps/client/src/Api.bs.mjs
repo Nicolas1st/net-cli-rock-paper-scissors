@@ -4,95 +4,102 @@ import * as Env from "./Env.bs.mjs";
 import * as Game from "./entities/Game.bs.mjs";
 import * as Undici from "undici";
 import * as Nickname from "./entities/Nickname.bs.mjs";
-import * as Stdlib_Int from "@dzakh/rescript-stdlib/src/Stdlib_Int.bs.mjs";
+import * as Core__Int from "@rescript/core/src/Core__Int.bs.mjs";
 import * as Caml_option from "rescript/lib/es6/caml_option.js";
-import * as Stdlib_Option from "@dzakh/rescript-stdlib/src/Stdlib_Option.bs.mjs";
-import * as Stdlib_Promise from "@dzakh/rescript-stdlib/src/Stdlib_Promise.bs.mjs";
-import * as S$ReScriptStruct from "rescript-struct/src/S.bs.mjs";
+import * as Core__Option from "@rescript/core/src/Core__Option.bs.mjs";
+import * as S$RescriptSchema from "rescript-schema/src/S.bs.mjs";
 
-function make(path, method, inputStruct, dataStruct) {
+function make(path, method, inputSchema, dataSchema) {
   return function (input) {
-    var options_body = Stdlib_Option.getExnWithMessage(JSON.stringify(S$ReScriptStruct.Result.getExn(S$ReScriptStruct.serializeWith(input, inputStruct))), "Failed to serialize input to JSON for the \"" + method + "\" request to \"" + path + "\".");
+    var jsonString = S$RescriptSchema.serializeToJsonStringWith(input, inputSchema, undefined);
+    var tmp;
+    tmp = jsonString.TAG === "Ok" ? jsonString._0 : S$RescriptSchema.$$Error.raise(jsonString._0);
     var options = {
       method: method,
-      body: options_body
+      body: tmp
     };
-    return Stdlib_Promise.then(Undici.request("" + Env.apiUrl + "" + path + "", options), (function (response) {
-                    var contentLength = Stdlib_Option.getWithDefault(Stdlib_Option.flatMap(response.headers["content-length"], Stdlib_Int.fromString), 0);
-                    if (contentLength === 0) {
-                      return Promise.resolve(undefined);
-                    } else {
-                      return response.body.json();
-                    }
-                  })).then(function (unknown) {
-                return S$ReScriptStruct.Result.getExn(S$ReScriptStruct.parseWith(unknown, dataStruct));
+    return Undici.request(Env.apiUrl + path, options).then(function (response) {
+                  var contentLength = Core__Option.getOr(Core__Option.flatMap(response.headers["content-length"], (function (__x) {
+                              return Core__Int.fromString(__x, undefined);
+                            })), 0);
+                  if (contentLength === 0) {
+                    return Promise.resolve(undefined);
+                  } else {
+                    return response.body.json();
+                  }
+                }).then(function (unknown) {
+                return S$RescriptSchema.parseAnyOrRaiseWith(unknown, dataSchema);
               });
   };
 }
 
-var nickname = S$ReScriptStruct.transform(S$ReScriptStruct.string(undefined), (function (string) {
-        var nickname = Nickname.fromString(string);
-        if (nickname !== undefined) {
-          return Caml_option.valFromOption(nickname);
-        } else {
-          return S$ReScriptStruct.$$Error.raise("Invalid nickname. (" + string + ")");
-        }
-      }), Nickname.toString, undefined);
+var nickname = S$RescriptSchema.transform(S$RescriptSchema.string, (function (s) {
+        return {
+                p: (function (string) {
+                    var nickname = Nickname.fromString(string);
+                    if (nickname !== undefined) {
+                      return Caml_option.valFromOption(nickname);
+                    } else {
+                      return s.fail("Invalid nickname. (" + string + ")", undefined);
+                    }
+                  }),
+                s: Nickname.toString
+              };
+      }));
 
-var code = S$ReScriptStruct.transform(S$ReScriptStruct.$$int(undefined), (function ($$int) {
-        var gameCode = Game.Code.fromString($$int.toString());
-        if (gameCode !== undefined) {
-          return Caml_option.valFromOption(gameCode);
-        } else {
-          return S$ReScriptStruct.$$Error.raise("Invalid game code. (" + $$int + ")");
-        }
-      }), (function (value) {
-        var $$int = Stdlib_Int.fromString(Game.Code.toString(value));
-        if ($$int !== undefined) {
-          return $$int;
-        } else {
-          return S$ReScriptStruct.$$Error.raise("Invalid game code.");
-        }
-      }), undefined);
+var code = S$RescriptSchema.transform(S$RescriptSchema.$$int, (function (s) {
+        return {
+                p: (function ($$int) {
+                    var gameCode = Game.Code.fromString($$int.toString());
+                    if (gameCode !== undefined) {
+                      return Caml_option.valFromOption(gameCode);
+                    } else {
+                      return s.fail("Invalid game code. (" + $$int + ")", undefined);
+                    }
+                  }),
+                s: (function (value) {
+                    var $$int = Core__Int.fromString(Game.Code.toString(value), undefined);
+                    if ($$int !== undefined) {
+                      return $$int;
+                    } else {
+                      return s.fail("Invalid game code.", undefined);
+                    }
+                  })
+              };
+      }));
 
-var move = S$ReScriptStruct.union([
-      S$ReScriptStruct.literalVariant({
-            TAG: /* String */0,
-            _0: "rock"
-          }, /* Rock */0),
-      S$ReScriptStruct.literalVariant({
-            TAG: /* String */0,
-            _0: "paper"
-          }, /* Paper */2),
-      S$ReScriptStruct.literalVariant({
-            TAG: /* String */0,
-            _0: "scissors"
-          }, /* Scissors */1)
+var move = S$RescriptSchema.union([
+      S$RescriptSchema.variant(S$RescriptSchema.literal("rock"), (function (param) {
+              return "Rock";
+            })),
+      S$RescriptSchema.variant(S$RescriptSchema.literal("paper"), (function (param) {
+              return "Paper";
+            })),
+      S$RescriptSchema.variant(S$RescriptSchema.literal("scissors"), (function (param) {
+              return "Scissors";
+            }))
     ]);
 
-var outcome = S$ReScriptStruct.union([
-      S$ReScriptStruct.literalVariant({
-            TAG: /* String */0,
-            _0: "win"
-          }, /* Win */1),
-      S$ReScriptStruct.literalVariant({
-            TAG: /* String */0,
-            _0: "draw"
-          }, /* Draw */0),
-      S$ReScriptStruct.literalVariant({
-            TAG: /* String */0,
-            _0: "loss"
-          }, /* Loss */2)
+var outcome = S$RescriptSchema.union([
+      S$RescriptSchema.variant(S$RescriptSchema.literal("win"), (function (param) {
+              return "Win";
+            })),
+      S$RescriptSchema.variant(S$RescriptSchema.literal("draw"), (function (param) {
+              return "Draw";
+            })),
+      S$RescriptSchema.variant(S$RescriptSchema.literal("loss"), (function (param) {
+              return "Loss";
+            }))
     ]);
 
-function make$1(param) {
-  return make("/game", "POST", S$ReScriptStruct.object(function (o) {
+function make$1() {
+  return make("/game", "POST", S$RescriptSchema.object(function (s) {
                   return {
-                          nickname: S$ReScriptStruct.field(o, "userName", nickname)
+                          nickname: s.f("userName", nickname)
                         };
-                }), S$ReScriptStruct.object(function (o) {
+                }), S$RescriptSchema.object(function (s) {
                   return {
-                          gameCode: S$ReScriptStruct.field(o, "gameCode", code)
+                          gameCode: s.f("gameCode", code)
                         };
                 }));
 }
@@ -101,51 +108,43 @@ var CreateGame = {
   make: make$1
 };
 
-function make$2(param) {
-  return make("/game/connection", "POST", S$ReScriptStruct.object(function (o) {
+function make$2() {
+  return make("/game/connection", "POST", S$RescriptSchema.object(function (s) {
                   return {
-                          nickname: S$ReScriptStruct.field(o, "userName", nickname),
-                          gameCode: S$ReScriptStruct.field(o, "gameCode", code)
+                          nickname: s.f("userName", nickname),
+                          gameCode: s.f("gameCode", code)
                         };
-                }), S$ReScriptStruct.literal(/* EmptyOption */1));
+                }), S$RescriptSchema.unit);
 }
 
 var JoinGame = {
   make: make$2
 };
 
-function make$3(param) {
-  return make("/game/status", "POST", S$ReScriptStruct.object(function (o) {
+function make$3() {
+  return make("/game/status", "POST", S$RescriptSchema.object(function (s) {
                   return {
-                          nickname: S$ReScriptStruct.field(o, "userName", nickname),
-                          gameCode: S$ReScriptStruct.field(o, "gameCode", code)
+                          nickname: s.f("userName", nickname),
+                          gameCode: s.f("gameCode", code)
                         };
-                }), S$ReScriptStruct.union([
-                  S$ReScriptStruct.object(function (o) {
-                        S$ReScriptStruct.discriminant(o, "status", S$ReScriptStruct.literal({
-                                  TAG: /* String */0,
-                                  _0: "waiting"
-                                }));
-                        return /* WaitingForOpponentJoin */0;
+                }), S$RescriptSchema.union([
+                  S$RescriptSchema.object(function (s) {
+                        s.tag("status", "waiting");
+                        return "WaitingForOpponentJoin";
                       }),
-                  S$ReScriptStruct.object(function (o) {
-                        S$ReScriptStruct.discriminant(o, "status", S$ReScriptStruct.literal({
-                                  TAG: /* String */0,
-                                  _0: "inProcess"
-                                }));
-                        return /* InProgress */1;
+                  S$RescriptSchema.object(function (s) {
+                        s.tag("status", "inProcess");
+                        return "InProgress";
                       }),
-                  S$ReScriptStruct.object(function (o) {
-                        S$ReScriptStruct.discriminant(o, "status", S$ReScriptStruct.literal({
-                                  TAG: /* String */0,
-                                  _0: "finished"
-                                }));
-                        return S$ReScriptStruct.field(o, "gameResult", S$ReScriptStruct.object(function (o) {
-                                        return /* Finished */{
+                  S$RescriptSchema.object(function (s) {
+                        s.tag("status", "finished");
+                        return s.f("gameResult", S$RescriptSchema.object(function (s) {
+                                        return {
+                                                TAG: "Finished",
                                                 _0: {
-                                                  outcome: S$ReScriptStruct.field(o, "outcome", outcome),
-                                                  yourMove: S$ReScriptStruct.field(o, "yourMove", move),
-                                                  opponentsMove: S$ReScriptStruct.field(o, "opponentsMove", move)
+                                                  outcome: s.f("outcome", outcome),
+                                                  yourMove: s.f("yourMove", move),
+                                                  opponentsMove: s.f("opponentsMove", move)
                                                 }
                                               };
                                       }));
@@ -157,14 +156,14 @@ var RequestGameStatus = {
   make: make$3
 };
 
-function make$4(param) {
-  return make("/game/move", "POST", S$ReScriptStruct.object(function (o) {
+function make$4() {
+  return make("/game/move", "POST", S$RescriptSchema.object(function (s) {
                   return {
-                          nickname: S$ReScriptStruct.field(o, "userName", nickname),
-                          gameCode: S$ReScriptStruct.field(o, "gameCode", code),
-                          yourMove: S$ReScriptStruct.field(o, "move", move)
+                          nickname: s.f("userName", nickname),
+                          gameCode: s.f("gameCode", code),
+                          yourMove: s.f("move", move)
                         };
-                }), S$ReScriptStruct.literal(/* EmptyOption */1));
+                }), S$RescriptSchema.unit);
 }
 
 var SendMove = {

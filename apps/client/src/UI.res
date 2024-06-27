@@ -2,7 +2,7 @@
 
 module MultilineText = {
   let make = strings => {
-    strings->Array.joinWith("\n")
+    strings->Array.join("\n")
   }
 }
 
@@ -60,7 +60,7 @@ module Input = {
       answer
       ->Dict.getUnsafe(_promptName)
       ->parser
-      ->Result.getExnWithMessage("Must be already validated by the validate function.")
+      ->ResultX.getExnWithMessage("Must be already validated by the validate function.")
     })
 }
 

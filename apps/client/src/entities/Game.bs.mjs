@@ -2,9 +2,9 @@
 
 
 var values = [
-  /* Rock */0,
-  /* Scissors */1,
-  /* Paper */2
+  "Rock",
+  "Scissors",
+  "Paper"
 ];
 
 var Move = {
@@ -18,8 +18,8 @@ function fromString(string) {
   
 }
 
-function toString(prim) {
-  return prim;
+function toString(v) {
+  return v;
 }
 
 var Code = {

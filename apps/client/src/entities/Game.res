@@ -15,7 +15,7 @@ module Code = {
     }
   }
 
-  let toString = Obj.magic
+  let toString = v => v->Obj.magic
 }
 
 type outcome = Draw | Win | Loss

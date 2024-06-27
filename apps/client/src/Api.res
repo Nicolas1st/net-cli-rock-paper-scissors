@@ -1,68 +1,67 @@
 module Http = {
-  let make = (~path, ~method, ~inputStruct: S.t<'input>, ~dataStruct: S.t<'data>) =>
-    (. input: 'input): Promise.t<'data> => {
-      let options: Undici.Request.options = {
-        method,
-        body: input
-        ->S.serializeWith(inputStruct)
-        ->S.Result.getExn
-        ->JSON.stringifyAny
-        ->Option.getExnWithMessage(
-          `Failed to serialize input to JSON for the "${(method :> string)}" request to "${path}".`,
-        ),
-      }
-      Undici.Request.call(~url=`${Env.apiUrl}${path}`, ~options)
-      ->Promise.then(response => {
-        let contentLength =
-          response.headers
-          ->Dict.get("content-length")
-          ->Option.flatMap(Int.fromString)
-          ->Option.getWithDefault(0)
-        if contentLength === 0 {
-          Promise.resolve(%raw(`undefined`))
-        } else {
-          response.body->Undici.Response.Body.json
-        }
-      })
-      ->Promise.thenResolve(unknown => {
-        unknown->S.parseWith(dataStruct)->S.Result.getExn
-      })
+  let make = (~path, ~method, ~inputSchema: S.t<'input>, ~dataSchema: S.t<'data>) => (
+    input: 'input,
+  ): Promise.t<'data> => {
+    let options: Undici.Request.options = {
+      method,
+      body: switch input->S.serializeToJsonStringWith(inputSchema) {
+      | Ok(jsonString) => jsonString
+      | Error(error) => S.Error.raise(error)
+      },
     }
+    Undici.Request.call(~url=`${Env.apiUrl}${path}`, ~options)
+    ->Promise.then(response => {
+      let contentLength =
+        response.headers
+        ->Dict.get("content-length")
+        ->Option.flatMap(Int.fromString(_))
+        ->Option.getOr(0)
+      if contentLength === 0 {
+        Promise.resolve(%raw(`undefined`))
+      } else {
+        response.body->Undici.Response.Body.json
+      }
+    })
+    ->Promise.thenResolve(unknown => {
+      unknown->S.parseAnyOrRaiseWith(dataSchema)
+    })
+  }
 }
 
-module Struct = {
-  let nickname = S.string()->S.transform(~parser=string =>
-    switch string->Nickname.fromString {
-    | Some(nickname) => nickname
-    | None => S.Error.raise(`Invalid nickname. (${string})`)
-    }
-  , ~serializer=Nickname.toString, ())
+module Schema = {
+  let nickname = S.string->S.transform(s => {
+    parser: string =>
+      switch string->Nickname.fromString {
+      | Some(nickname) => nickname
+      | None => s.fail(`Invalid nickname. (${string})`)
+      },
+    serializer: Nickname.toString,
+  })
 
   module Game = {
-    let code = S.int()->S.transform(
-      ~parser=int =>
+    let code = S.int->S.transform(s => {
+      parser: int =>
         switch int->Int.toString->Game.Code.fromString {
         | Some(gameCode) => gameCode
-        | None => S.Error.raise(`Invalid game code. (${int->Obj.magic})`)
+        | None => s.fail(`Invalid game code. (${int->Obj.magic})`)
         },
-      ~serializer=value =>
+      serializer: value =>
         switch value->Game.Code.toString->Int.fromString {
         | Some(int) => int
-        | None => S.Error.raise(`Invalid game code.`)
+        | None => s.fail(`Invalid game code.`)
         },
-      (),
-    )
+    })
 
     let move = S.union([
-      S.literalVariant(String("rock"), Game.Move.Rock),
-      S.literalVariant(String("paper"), Game.Move.Paper),
-      S.literalVariant(String("scissors"), Game.Move.Scissors),
+      S.literal("rock")->S.variant(_ => Game.Move.Rock),
+      S.literal("paper")->S.variant(_ => Game.Move.Paper),
+      S.literal("scissors")->S.variant(_ => Game.Move.Scissors),
     ])
 
     let outcome = S.union([
-      S.literalVariant(String("win"), Game.Win),
-      S.literalVariant(String("draw"), Game.Draw),
-      S.literalVariant(String("loss"), Game.Loss),
+      S.literal("win")->S.variant(_ => Game.Win),
+      S.literal("draw")->S.variant(_ => Game.Draw),
+      S.literal("loss")->S.variant(_ => Game.Loss),
     ])
   }
 }
@@ -72,11 +71,11 @@ module CreateGame = {
     Http.make(
       ~path="/game",
       ~method=#POST,
-      ~inputStruct=S.object((o): Port.CreateGame.input => {
-        nickname: o->S.field("userName", Struct.nickname),
+      ~inputSchema=S.object((s): Port.CreateGame.input => {
+        nickname: s.field("userName", Schema.nickname),
       }),
-      ~dataStruct=S.object((o): Port.CreateGame.data => {
-        gameCode: o->S.field("gameCode", Struct.Game.code),
+      ~dataSchema=S.object((s): Port.CreateGame.data => {
+        gameCode: s.field("gameCode", Schema.Game.code),
       }),
     )
   }
@@ -87,11 +86,11 @@ module JoinGame = {
     Http.make(
       ~path="/game/connection",
       ~method=#POST,
-      ~inputStruct=S.object((o): Port.JoinGame.input => {
-        nickname: o->S.field("userName", Struct.nickname),
-        gameCode: o->S.field("gameCode", Struct.Game.code),
+      ~inputSchema=S.object((s): Port.JoinGame.input => {
+        nickname: s.field("userName", Schema.nickname),
+        gameCode: s.field("gameCode", Schema.Game.code),
       }),
-      ~dataStruct=S.literal(EmptyOption),
+      ~dataSchema=S.unit,
     )
   }
 }
@@ -101,27 +100,27 @@ module RequestGameStatus = {
     Http.make(
       ~path="/game/status",
       ~method=#POST,
-      ~inputStruct=S.object((o): Port.RequestGameStatus.input => {
-        nickname: o->S.field("userName", Struct.nickname),
-        gameCode: o->S.field("gameCode", Struct.Game.code),
+      ~inputSchema=S.object((s): Port.RequestGameStatus.input => {
+        nickname: s.field("userName", Schema.nickname),
+        gameCode: s.field("gameCode", Schema.Game.code),
       }),
-      ~dataStruct=S.union([
-        S.object(o => {
-          o->S.discriminant("status", S.literal(String("waiting")))
+      ~dataSchema=S.union([
+        S.object(s => {
+          s.tag("status", "waiting")
           Port.RequestGameStatus.WaitingForOpponentJoin
         }),
-        S.object(o => {
-          o->S.discriminant("status", S.literal(String("inProcess")))
+        S.object(s => {
+          s.tag("status", "inProcess")
           Port.RequestGameStatus.InProgress
         }),
-        S.object(o => {
-          o->S.discriminant("status", S.literal(String("finished")))
-          o->S.field(
+        S.object(s => {
+          s.tag("status", "finished")
+          s.field(
             "gameResult",
-            S.object(o => Port.RequestGameStatus.Finished({
-              outcome: o->S.field("outcome", Struct.Game.outcome),
-              yourMove: o->S.field("yourMove", Struct.Game.move),
-              opponentsMove: o->S.field("opponentsMove", Struct.Game.move),
+            S.object(s => Port.RequestGameStatus.Finished({
+              outcome: s.field("outcome", Schema.Game.outcome),
+              yourMove: s.field("yourMove", Schema.Game.move),
+              opponentsMove: s.field("opponentsMove", Schema.Game.move),
             })),
           )
         }),
@@ -135,12 +134,12 @@ module SendMove = {
     Http.make(
       ~path="/game/move",
       ~method=#POST,
-      ~inputStruct=S.object((o): Port.SendMove.input => {
-        nickname: o->S.field("userName", Struct.nickname),
-        gameCode: o->S.field("gameCode", Struct.Game.code),
-        yourMove: o->S.field("move", Struct.Game.move),
+      ~inputSchema=S.object((s): Port.SendMove.input => {
+        nickname: s.field("userName", Schema.nickname),
+        gameCode: s.field("gameCode", Schema.Game.code),
+        yourMove: s.field("move", Schema.Game.move),
       }),
-      ~dataStruct=S.literal(EmptyOption),
+      ~dataSchema=S.unit,
     )
   }
 }

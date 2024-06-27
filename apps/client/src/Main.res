@@ -171,8 +171,8 @@ let run = () => {
   )
   let render = state' =>
     renderer(state')
-    ->Promise.thenResolve(answer => {
-      answer->Option.map(service->FSM.send)
+    ->Promise.thenResolve(maybeAnswer => {
+      maybeAnswer->Option.map(answer => service->FSM.send(answer))
     })
     ->ignore
   let _ = service->FSM.subscribe(state => {
