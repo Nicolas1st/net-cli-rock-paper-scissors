@@ -22,15 +22,15 @@
   "dependencies": {
     "@rescript/core": "1.5.0",
     "inquirer": "8.2.4",
-    "rescript": "11.1.2",
-    "rescript-envsafe": "4.1.0",
-    "rescript-rest": "0.4.1",
-    "rescript-schema": "7.0.1",
+    "rescript": "11.1.4",
+    "rescript-envsafe": "5.0.0",
+    "rescript-rest": "1.1.0",
+    "rescript-schema": "9.0.1",
     "undici": "5.28.4"
   },
   "devDependencies": {
-    "@dzakh/rescript-ava": "3.0.0",
-    "ava": "5.2.0",
+    "@dzakh/rescript-ava": "3.1.0",
+    "ava": "6.2.0",
     "rescript-stdlib-vendorer": "1.1.0"
   }
 }

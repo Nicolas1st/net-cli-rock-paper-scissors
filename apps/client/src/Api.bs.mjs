@@ -44,25 +44,25 @@ var code = S$RescriptSchema.transform(S$RescriptSchema.$$int, (function (s) {
       }));
 
 var move = S$RescriptSchema.union([
-      S$RescriptSchema.variant(S$RescriptSchema.literal("rock"), (function (param) {
+      S$RescriptSchema.to(S$RescriptSchema.literal("rock"), (function (param) {
               return "Rock";
             })),
-      S$RescriptSchema.variant(S$RescriptSchema.literal("paper"), (function (param) {
+      S$RescriptSchema.to(S$RescriptSchema.literal("paper"), (function (param) {
               return "Paper";
             })),
-      S$RescriptSchema.variant(S$RescriptSchema.literal("scissors"), (function (param) {
+      S$RescriptSchema.to(S$RescriptSchema.literal("scissors"), (function (param) {
               return "Scissors";
             }))
     ]);
 
 var outcome = S$RescriptSchema.union([
-      S$RescriptSchema.variant(S$RescriptSchema.literal("win"), (function (param) {
+      S$RescriptSchema.to(S$RescriptSchema.literal("win"), (function (param) {
               return "Win";
             })),
-      S$RescriptSchema.variant(S$RescriptSchema.literal("draw"), (function (param) {
+      S$RescriptSchema.to(S$RescriptSchema.literal("draw"), (function (param) {
               return "Draw";
             })),
-      S$RescriptSchema.variant(S$RescriptSchema.literal("loss"), (function (param) {
+      S$RescriptSchema.to(S$RescriptSchema.literal("loss"), (function (param) {
               return "Loss";
             }))
     ]);

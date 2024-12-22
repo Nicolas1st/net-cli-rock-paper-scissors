@@ -23,15 +23,15 @@ module Schema = {
     })
 
     let move = S.union([
-      S.literal("rock")->S.variant(_ => Game.Move.Rock),
-      S.literal("paper")->S.variant(_ => Game.Move.Paper),
-      S.literal("scissors")->S.variant(_ => Game.Move.Scissors),
+      S.literal("rock")->S.to(_ => Game.Move.Rock),
+      S.literal("paper")->S.to(_ => Game.Move.Paper),
+      S.literal("scissors")->S.to(_ => Game.Move.Scissors),
     ])
 
     let outcome = S.union([
-      S.literal("win")->S.variant(_ => Game.Win),
-      S.literal("draw")->S.variant(_ => Game.Draw),
-      S.literal("loss")->S.variant(_ => Game.Loss),
+      S.literal("win")->S.to(_ => Game.Win),
+      S.literal("draw")->S.to(_ => Game.Draw),
+      S.literal("loss")->S.to(_ => Game.Loss),
     ])
   }
 }
@@ -42,13 +42,13 @@ module CreateGame = {
   let make = (): Port.CreateGame.t => {
     let route = Rest.route(() => {
       path: "/game",
-      method: "POST",
+      method: Post,
       variables: (s): Port.CreateGame.input => {
         nickname: s.field("userName", Schema.nickname),
       },
       responses: [
         (s): Port.CreateGame.data => {
-          s.status(#200)
+          s.status(200)
           {
             gameCode: s.field("gameCode", Schema.Game.code),
           }
@@ -64,14 +64,14 @@ module JoinGame = {
   let make = (): Port.JoinGame.t => {
     let route = Rest.route(() => {
       path: "/game/connection",
-      method: "POST",
+      method: Post,
       variables: (s): Port.JoinGame.input => {
         nickname: s.field("userName", Schema.nickname),
         gameCode: s.field("gameCode", Schema.Game.code),
       },
       responses: [
         s => {
-          s.status(#204)
+          s.status(204)
           ()
         },
       ],
@@ -85,14 +85,14 @@ module RequestGameStatus = {
   let make = (): Port.RequestGameStatus.t => {
     let route = Rest.route(() => {
       path: "/game/status",
-      method: "POST",
+      method: Post,
       variables: (s): Port.RequestGameStatus.input => {
         nickname: s.field("userName", Schema.nickname),
         gameCode: s.field("gameCode", Schema.Game.code),
       },
       responses: [
         s => {
-          s.status(#200)
+          s.status(200)
           s.data(
             S.union([
               S.object(s => {
@@ -130,7 +130,7 @@ module SendMove = {
   let make = (): Port.SendMove.t => {
     let route = Rest.route(() => {
       path: "/game/move",
-      method: "POST",
+      method: Post,
       variables: (s): Port.SendMove.input => {
         nickname: s.field("userName", Schema.nickname),
         gameCode: s.field("gameCode", Schema.Game.code),
@@ -138,7 +138,7 @@ module SendMove = {
       },
       responses: [
         s => {
-          s.status(#204)
+          s.status(204)
           ()
         },
       ],
